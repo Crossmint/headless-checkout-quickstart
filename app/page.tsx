@@ -21,7 +21,7 @@ export default function Home() {
 
               <div className="flex flex-col gap-4 w-full max-w-xs">
                 <Button onClick={handlePayClick} size="lg">
-                  PAY $ 0.58
+                  PURCHASE
                 </Button>
               </div>
             </div>

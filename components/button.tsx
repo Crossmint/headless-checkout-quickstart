@@ -21,7 +21,7 @@ export const Button: React.FC<ButtonProps> = ({
   type = "button",
 }) => {
   const baseClasses =
-    "relative font-bold text-black rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100";
+    "relative text-black rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100";
 
   const variantClasses = {
     primary: "bg-button-bg shadow-lg hover:shadow-xl hover:opacity-80",
@@ -34,6 +34,8 @@ export const Button: React.FC<ButtonProps> = ({
     lg: "px-8 py-4 text-lg",
   };
 
+  const fontClass = "font-['BreatheFireIII']";
+
   return (
     <button
       type={type}
@@ -41,6 +43,7 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={disabled}
       className={clsx(
         baseClasses,
+        fontClass,
         variantClasses[variant],
         sizeClasses[size],
         className

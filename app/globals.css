@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@font-face {
+  font-family: 'BreatheFireIII';
+  src: url('/fonts/BreatheFireIII.otf') format('opentype');
+}
 
 :root {
   --radius: 0.625rem;
