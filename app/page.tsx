@@ -1,14 +1,30 @@
 "use client";
 
 import Image from "next/image";
+import { Button } from "../components/button";
 
 export default function Home() {
+  const handlePayClick = () => {
+    console.log("Payment button clicked!");
+    // Add your payment logic here
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
       <main className="flex flex-col items-center sm:items-start">
         <div className="w-full flex items-center justify-center py-8 md:pt-4">
           <div className="bg-white rounded-2xl shadow-lg border max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-0 overflow-hidden">
-            Headless Checkout Quickstart
+            <div className="p-8 flex flex-col items-center justify-center gap-6">
+              <h1 className="text-2xl font-bold text-gray-800 mb-4">
+                Headless Checkout Quickstart
+              </h1>
+
+              <div className="flex flex-col gap-4 w-full max-w-xs">
+                <Button onClick={handlePayClick} size="lg">
+                  PAY $ 0.58
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </main>
