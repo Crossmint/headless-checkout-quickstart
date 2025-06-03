@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
-import { Providers } from "@/app/providers";
 import { DatadogAnalytics } from "@/components/datadog-analytics";
 
 const geistSans = Geist({
@@ -16,14 +15,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Embedded Checkout Quickstart",
+  title: "Headless Checkout Quickstart",
   description:
     "Allow your customers to buy NFTs with credit card and crypto payments, using Crossmint's embedded checkout. This quickstart provides a seamless integration for accepting payments in your dApp.",
   creator: "Crossmint",
   publisher: "Crossmint",
-  metadataBase: new URL("https://embedded-checkout.demos-crossmint.com"),
+  metadataBase: new URL("https://headless-checkout.demos-crossmint.com"),
   openGraph: {
-    title: "Embedded Checkout Quickstart",
+    title: "Headless Checkout Quickstart",
     description:
       "Allow your customers to buy NFTs with credit card and crypto payments, using Crossmint's embedded checkout. This quickstart provides a seamless integration for accepting payments in your dApp.",
     images: [
@@ -37,7 +36,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Embedded Checkout Quickstart",
+    title: "Headless Checkout Quickstart",
     description:
       "Allow your customers to buy NFTs with credit card and crypto payments, using Crossmint's embedded checkout. This quickstart provides a seamless integration for accepting payments in your dApp.",
     images: [
@@ -59,7 +58,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Providers>{children}</Providers>
+        {children}
         <Analytics />
         <DatadogAnalytics />
       </body>
