@@ -13,11 +13,14 @@ export default function Home() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
       <main className="flex flex-col items-center sm:items-start">
         <div className="w-full flex items-center justify-center py-8 md:pt-4">
-          <div className="bg-white rounded-2xl shadow-lg border max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-0 overflow-hidden w-[1022px] h-[715px] bg-[url('/main-bg.svg')] bg-center bg-no-repeat">
-            <div className="p-8 flex flex-col items-center justify-center gap-6">
-              <h1 className="text-2xl text-white font-bold text-gray-800 mb-4 font-['BreatheFireIII']">
+          <div className="bg-white rounded-2xl shadow-lg border max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-0 overflow-hidden w-[1022px] h-[715px] bg-[url('/main-bg.svg')] bg-center bg-no-repeat relative">
+            <div className="p-8 backdrop-blur-sm flex flex-col items-center justify-center gap-6 relative z-10">
+              <h1 className="text-2xl text-white font-bold mb-4 font-['BreatheFireIII']">
                 CHOOSE YOUR WEAPON
               </h1>
+              <p className="text-white/80 text-center mb-6">
+                Select from the finest collection of expertly crafted items!
+              </p>
 
               <div className="flex flex-col gap-4 w-full max-w-xs">
                 <Button onClick={handlePayClick} size="lg">
