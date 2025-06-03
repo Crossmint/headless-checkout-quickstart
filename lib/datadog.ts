@@ -24,7 +24,7 @@ const initializeDatadog = () => {
       clientToken,
       env: "production",
       site: "datadoghq.com",
-      service: "embedded-checkout-quickstart",
+      service: "headless-checkout-quickstart",
       sessionSampleRate: 100,
       sessionReplaySampleRate: 20,
       defaultPrivacyLevel: "mask-user-input",

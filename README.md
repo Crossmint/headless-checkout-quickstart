@@ -2,20 +2,20 @@
 <img width="200" alt="Image" src="https://github.com/user-attachments/assets/8b617791-cd37-4a5a-8695-a7c9018b7c70" />
 <br>
 <br>
-<h1>Embedded Checkout Quickstart</h1>
+<h1>Headless Checkout Quickstart</h1>
 
 <div align="center">
-<a href="https://embedded-checkout.demos-crossmint.com/">Live Demo</a> | <a href="https://docs.crossmint.com/payments/embedded/overview">Docs</a> | <a href="https://github.com/crossmint">See all quickstarts</a>
+<a href="https://headless-checkout.demos-crossmint.com/">Live Demo</a> | <a href="https://docs.crossmint.com/payments/embedded/overview">Docs</a> | <a href="https://github.com/crossmint">See all quickstarts</a>
 </div>
 
 <br>
 <br>
-<img src="./assets/embedded.png" alt="Embedded Checkout Quickstart" width="full">
+<img src="./assets/headless.png" alt="Headless Checkout Quickstart" width="full">
 </div>
 
 ## Introduction
 
-Allow your customers to buy NFTs with credit card and crypto payments, using Crossmint's embedded checkout. This quickstart provides a seamless integration for accepting payments in your dApp.
+Allow your customers to buy NFTs with credit card and crypto payments, using Crossmint's headless checkout. This quickstart provides a seamless integration for accepting payments in your dApp.
 
 **Key features:**
 
@@ -27,21 +27,21 @@ Allow your customers to buy NFTs with credit card and crypto payments, using Cro
 
 - Create a developer account in the [Staging Console](https://staging.crossmint.com/signin?callbackUrl=/console).
 - Create a [new collection](https://docs.crossmint.com/payments/guides/create-collection) or [import yours](https://docs.crossmint.com/payments/guides/register-collection) in the console, and have your `collectionId` ready.
-- Make sure your collection has at least one NFT configured
+- Make sure your collection has at least one NFT configured.
 - From the detail view of your collection, navigate to the Checkout tab to configure the pricing settings and enable Credit Card and Crypto payments.
 
 ## Deploy
 
 Easily deploy the template to Vercel with the button below. You will need to set the required environment variables in the Vercel dashboard.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FCrossmint%2Fembedded-checkout-quickstart&env=NEXT_PUBLIC_CROSSMINT_API_KEY&env=NEXT_PUBLIC_CROSSMINT_COLLECTION_ID)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FCrossmint%2Fheadless-checkout-quickstart&env=NEXT_PUBLIC_CROSSMINT_API_KEY&env=NEXT_PUBLIC_CROSSMINT_COLLECTION_ID)
 
 ## Setup
 
 1. Clone the repository and navigate to the project folder:
 
     ```bash
-    git clone https://github.com/crossmint/embedded-checkout-quickstart.git && cd embedded-checkout-quickstart
+    git clone https://github.com/crossmint/headless-checkout-quickstart.git && cd headless-checkout-quickstart
     ```
 
 2. Install all dependencies:
@@ -88,7 +88,7 @@ Easily deploy the template to Vercel with the button below. You will need to set
 
 ## Using in production
 
-1. Embedded checkout is available on Staging for testing purposes. If you would like to use this on Production, [contact sales](https://www.crossmint.com/contact/sales) to request access.
+1. Headless checkout is available on Staging for testing purposes. If you would like to use this on Production, [contact sales](https://www.crossmint.com/contact/sales) to request access.
 2. Create an account in the [Production Console](https://www.crossmint.com/signin?callbackUrl=/console), add your collection and configure the payment settings from the Checkout tab.
 3. Verify your account as the project owner and verify your collection. [Learn more](https://docs.crossmint.com/introduction/platform/account-verification) about verifications.
 4. Update your `.env` file with your production variables.
