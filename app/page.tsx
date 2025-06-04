@@ -4,22 +4,50 @@ import Image from "next/image";
 import { useState } from "react";
 import { Button } from "../components/button";
 import { WeaponSelection } from "../components/weapon-selection";
+import { CheckoutDialog } from "../components/checkout-dialog";
+import type { Weapon } from "../types/weapon";
+
+// Weapon data - keeping it in sync with weapon-selection.tsx
+const WEAPONS: Weapon[] = [
+  {
+    id: "gods-sword",
+    name: "God's sword",
+    price: "$0.53",
+    icon: "/sword.svg",
+  },
+  {
+    id: "elves-axe-silver",
+    name: "Elves axe - Silver",
+    price: "$0.53",
+    icon: "/axe.svg",
+  },
+  {
+    id: "magic-potion",
+    name: "Magic potion",
+    price: "$0.53",
+    icon: "/elixir.svg",
+  },
+];
 
 export default function Home() {
   const [selectedWeapon, setSelectedWeapon] = useState("gods-sword");
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   const handlePayClick = () => {
     console.log("Payment button clicked!");
     console.log("Selected weapon:", selectedWeapon);
-    // Add your payment logic here
+    setIsCheckoutOpen(true);
   };
+
+  const selectedWeaponData =
+    WEAPONS.find((weapon) => weapon.id === selectedWeapon) || WEAPONS[0];
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
       <main className="flex flex-col items-center sm:items-start">
         <div className="w-full flex items-center justify-center py-8 md:pt-4">
           <div className="bg-white rounded-2xl shadow-lg border grid grid-cols-1 md:grid-cols-2 gap-0 overflow-hidden lg:w-[1025px] lg:h-[715px] bg-[url('/main-bg.svg')] bg-center bg-no-repeat relative">
-            <div className="p-8 md:m-15 md:backdrop-blur-lg flex flex-col items-center justify-center gap-6 relative z-10 rounded-2xl">
+            <div className="p-8 md:m-15 md:backdrop-blur-lg flex border border-white/20 flex-col items-center justify-center gap-6 relative z-10 rounded-2xl">
               <h1 className="text-4xl text-white font-bold mb-4 font-['BreatheFireIII']">
                 CHOOSE YOUR WEAPON
               </h1>
@@ -99,6 +127,12 @@ export default function Home() {
           />
         </div>
       </footer>
+
+      <CheckoutDialog
+        selectedWeapon={selectedWeaponData}
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+      />
     </div>
   );
 }
