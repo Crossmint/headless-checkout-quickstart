@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   useStripe,
   useElements,
   PaymentElement,
+  LinkAuthenticationElement,
   Elements,
 } from "@stripe/react-stripe-js";
 import type { Order } from "@/types/checkout";
@@ -38,7 +39,6 @@ const PaymentForm: React.FC<StripePaymentFormProps> = ({
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [email, setEmail] = useState(order.payment?.receiptEmail || "");
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -54,10 +54,14 @@ const PaymentForm: React.FC<StripePaymentFormProps> = ({
     setIsProcessing(true);
 
     try {
+      elements.update({
+        customerSessionClientSecret:
+          order.payment.preparation.stripeClientSecret,
+      });
       const { error: submitError } = await elements.submit();
       const { error: confirmError } = await stripe.confirmPayment({
-        elements,
         clientSecret: order.payment.preparation.stripeClientSecret,
+        elements,
         confirmParams: {
           return_url: window.location.href,
         },
@@ -68,34 +72,42 @@ const PaymentForm: React.FC<StripePaymentFormProps> = ({
         onPaymentError(
           submitError?.message || confirmError?.message || "Payment failed"
         );
-      } else {
-        onPaymentSuccess();
+        return;
       }
+      onPaymentSuccess();
     } catch (err) {
-      onPaymentError("An unexpected error occurred");
+      onPaymentError(
+        err instanceof Error ? err.message : "An unexpected error occurred"
+      );
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newEmail = e.target.value;
-    setEmail(newEmail);
-    onEmailChange(newEmail);
+  const handleEmailChange = (event: { value: { email: string } }) => {
+    if (event.value?.email) {
+      onEmailChange(event.value.email);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
+      <LinkAuthenticationElement
         onChange={handleEmailChange}
-        className="w-full px-4 py-3 bg-gray-600/50 border border-gray-500 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+        options={{
+          defaultValues: {
+            email: order.payment?.receiptEmail || "",
+          },
+        }}
       />
+
       <PaymentElement
         options={{
           layout: "tabs",
+          wallets: {
+            applePay: "auto",
+            googlePay: "auto",
+          },
         }}
       />
 
@@ -110,24 +122,26 @@ const PaymentForm: React.FC<StripePaymentFormProps> = ({
   );
 };
 
-export const StripePaymentForm: React.FC<StripePaymentFormProps> = (props) => {
+export const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
+  order,
+  ...props
+}) => {
   const stripePromise = loadStripe(
-    props.order?.payment.preparation?.stripePublishableKey ?? ""
+    order?.payment.preparation?.stripePublishableKey ?? ""
   );
+
   const elementOptions: StripeElementsOptions = {
     appearance: stripeAppearance,
-    ...(props.order?.payment.preparation?.stripeClientSecret
-      ? { clientSecret: props.order.payment.preparation.stripeClientSecret } // if we have a client secret, we're confirming payment
-      : { mode: "setup", currency: "usd" }), // otherwise, we're setting up a payment method
+    mode: "payment",
+    currency: "usd",
+    amount: Number(order?.quote?.totalPrice?.amount ?? 0) * 100,
+    capture_method: "manual",
+    payment_method_types: ["card"],
   };
 
   return (
-    <Elements
-      stripe={stripePromise}
-      options={elementOptions}
-      key={props.order?.payment.preparation?.stripeClientSecret || "setup"} // force re-render when switching modes
-    >
-      <PaymentForm {...props} />
+    <Elements stripe={stripePromise} options={elementOptions}>
+      <PaymentForm order={order} {...props} />
     </Elements>
   );
 };
