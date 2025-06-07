@@ -55,9 +55,10 @@ export type Order = {
     method: string;
     currency: string;
     preparation: {
-      chain: string;
-      payerAddress: string;
-      serializedTransaction: string;
+      chain?: string;
+      payerAddress?: string;
+      serializedTransaction?: string;
+      stripePublishableKey?: string;
     };
   };
 };
