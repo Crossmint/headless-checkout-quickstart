@@ -4,7 +4,8 @@ import { clsx } from "clsx";
 import type { Weapon } from "../types/weapon";
 import { useCheckout } from "@/hooks/useCheckout";
 import { collectionId, isValidEmail } from "@/lib/checkout";
-import { StripePaymentForm } from "./stripe-payment-form";
+import { CardPayment } from "./card-payment";
+import { UsdcPayment } from "./usdc-payment";
 
 interface CheckoutDialogProps {
   selectedWeapon: Weapon;
@@ -174,55 +175,26 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
         {/* Payment method content area */}
         <div className="min-h-[200px] bg-gray-700/20 rounded-xl p-6">
-          {isCreatingOrder ? (
-            <div className="flex flex-col items-center justify-center h-full gap-4">
-              <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              <p className="text-white/60 text-center">
-                Creating your order...
-              </p>
-            </div>
-          ) : isPolling ? (
-            <div className="flex flex-col items-center justify-center h-full gap-4">
-              <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              <p className="text-white/60 text-center">Processing payment...</p>
-              {order?.payment?.status === "succeeded" && (
-                <p className="text-green-400 text-center font-medium">
-                  Payment successful! 🎉
-                </p>
-              )}
-              {order?.payment?.status === "failed" && (
-                <p className="text-red-400 text-center font-medium">
-                  Payment failed. Please try again.
-                </p>
-              )}
-            </div>
-          ) : selectedPaymentMethod === "card" &&
-            order?.payment.preparation?.stripePublishableKey ? (
-            <div className="space-y-4">
-              {paymentError && (
-                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3">
-                  <p className="text-red-400 text-sm">{paymentError}</p>
-                </div>
-              )}
-              <StripePaymentForm
-                order={order}
-                onPaymentSuccess={handlePaymentSuccess}
-                onPaymentError={handlePaymentError}
-                onEmailChange={handleEmailChange}
-              />
-            </div>
-          ) : selectedPaymentMethod === "usdc" ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-white/60 text-center">
-                USDC payment will be implemented next
-              </p>
-            </div>
+          {selectedPaymentMethod === "card" ? (
+            <CardPayment
+              order={order}
+              isCreatingOrder={isCreatingOrder}
+              isPolling={isPolling}
+              onPaymentSuccess={handlePaymentSuccess}
+              onPaymentError={handlePaymentError}
+              onEmailChange={handleEmailChange}
+              paymentError={paymentError}
+            />
           ) : (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-white/60 text-center">
-                Preparing payment form...
-              </p>
-            </div>
+            <UsdcPayment
+              order={order}
+              isCreatingOrder={isCreatingOrder}
+              isPolling={isPolling}
+              onPaymentSuccess={handlePaymentSuccess}
+              onPaymentError={handlePaymentError}
+              onEmailChange={handleEmailChange}
+              paymentError={paymentError}
+            />
           )}
         </div>
       </div>

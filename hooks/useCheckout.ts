@@ -19,8 +19,8 @@ export const useCheckout = () => {
         return null;
       }
       const result = await apiGetOrder(order.orderId, clientSecret);
-      if (result.success) {
-        return result.order;
+      if (result.success && result.order) {
+        setOrder(result.order);
       }
       return null;
     },
@@ -73,7 +73,7 @@ export const useCheckout = () => {
   useEffect(() => {
     if (isPolling && order?.payment?.status) {
       if (
-        order.payment.status === "succeeded" ||
+        order.payment.status === "completed" ||
         order.payment.status === "failed"
       ) {
         setIsPolling(false);

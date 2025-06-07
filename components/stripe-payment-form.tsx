@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   useStripe,
   useElements,
@@ -38,6 +38,7 @@ const PaymentForm: React.FC<StripePaymentFormProps> = ({
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [email, setEmail] = useState(order.payment?.receiptEmail || "");
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -77,12 +78,20 @@ const PaymentForm: React.FC<StripePaymentFormProps> = ({
     }
   };
 
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    onEmailChange(newEmail);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <input
         type="email"
         placeholder="Email"
-        onChange={(e) => onEmailChange(e.target.value)}
+        value={email}
+        onChange={handleEmailChange}
+        className="w-full px-4 py-3 bg-gray-600/50 border border-gray-500 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
       />
       <PaymentElement
         options={{
@@ -102,7 +111,6 @@ const PaymentForm: React.FC<StripePaymentFormProps> = ({
 };
 
 export const StripePaymentForm: React.FC<StripePaymentFormProps> = (props) => {
-  console.log("rendering stripe payment form", props.order);
   const stripePromise = loadStripe(
     props.order?.payment.preparation?.stripePublishableKey ?? ""
   );
@@ -114,7 +122,11 @@ export const StripePaymentForm: React.FC<StripePaymentFormProps> = (props) => {
   };
 
   return (
-    <Elements stripe={stripePromise} options={elementOptions}>
+    <Elements
+      stripe={stripePromise}
+      options={elementOptions}
+      key={props.order?.payment.preparation?.stripeClientSecret || "setup"} // force re-render when switching modes
+    >
       <PaymentForm {...props} />
     </Elements>
   );

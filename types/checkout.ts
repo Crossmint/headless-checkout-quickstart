@@ -86,3 +86,13 @@ export type CreateOrderResponse = {
   clientSecret: string;
   order: Order;
 };
+
+export interface PaymentComponentProps {
+  order: Order | null;
+  isCreatingOrder: boolean;
+  isPolling: boolean;
+  onPaymentSuccess: () => void;
+  onPaymentError: (error: string) => void;
+  onEmailChange: (email: string) => void;
+  paymentError?: string | null;
+}
