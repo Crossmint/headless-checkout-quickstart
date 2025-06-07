@@ -136,3 +136,8 @@ export const getOrder = async (orderId: string, clientSecret: string) => {
     };
   }
 };
+
+// validate emails are always tricky, this is a simple regex that should work for most cases
+export const isValidEmail = (email: string) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+};

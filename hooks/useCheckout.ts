@@ -1,29 +1,31 @@
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createOrder as apiCreateOrder,
   updateOrder as apiUpdateOrder,
   getOrder as apiGetOrder,
 } from "@/lib/checkout";
-import type { OrderInput } from "@/types/checkout";
+import type { Order, OrderInput } from "@/types/checkout";
 
 export const useCheckout = () => {
-  const [orderId, setOrderId] = useState<string | null>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
 
-  const { data: order, isLoading: isOrderLoading } = useQuery({
-    queryKey: ["order", orderId, clientSecret],
+  const { isLoading: isOrderLoading, refetch: refetchOrder } = useQuery({
+    queryKey: ["order", order?.orderId, clientSecret],
     queryFn: async () => {
-      if (!orderId || !clientSecret) {
+      if (!order?.orderId || !clientSecret) {
         return null;
       }
-      const result = await apiGetOrder(orderId, clientSecret);
+      const result = await apiGetOrder(order.orderId, clientSecret);
       if (result.success) {
         return result.order;
       }
       return null;
     },
-    enabled: !!orderId && !!clientSecret,
+    enabled: !!order?.orderId && !!clientSecret,
+    refetchInterval: isPolling ? 1000 : false, // poll every second when polling is active
   });
 
   const { mutate: createOrder, isPending: isCreatingOrder } = useMutation({
@@ -35,8 +37,8 @@ export const useCheckout = () => {
       return null;
     },
     onSuccess: (response) => {
-      if (response?.order?.orderId && response?.clientSecret) {
-        setOrderId(response.order.orderId);
+      if (response?.order && response?.clientSecret) {
+        setOrder(response.order);
         setClientSecret(response.clientSecret);
       }
     },
@@ -44,16 +46,44 @@ export const useCheckout = () => {
 
   const { mutate: updateOrder, isPending: isUpdatingOrder } = useMutation({
     mutationFn: async (orderInput: Partial<OrderInput>) => {
-      if (!orderId || !clientSecret) {
+      if (!order?.orderId || !clientSecret) {
         return null;
       }
-      const result = await apiUpdateOrder(orderId, clientSecret, orderInput);
+      const result = await apiUpdateOrder(
+        order.orderId,
+        clientSecret,
+        orderInput
+      );
       if (result.success) {
         return result.order;
       }
       return null;
     },
+    onSuccess: (response) => {
+      if (response) {
+        setOrder(response);
+      }
+    },
   });
+
+  const startPollingForPayment = useCallback(() => {
+    setIsPolling(true);
+  }, []);
+
+  useEffect(() => {
+    if (isPolling && order?.payment?.status) {
+      if (
+        order.payment.status === "succeeded" ||
+        order.payment.status === "failed"
+      ) {
+        setIsPolling(false);
+      }
+    }
+  }, [isPolling, order?.payment?.status]);
+
+  const stopPolling = useCallback(() => {
+    setIsPolling(false);
+  }, []);
 
   return {
     order,
@@ -62,5 +92,9 @@ export const useCheckout = () => {
     isOrderLoading,
     isCreatingOrder,
     isUpdatingOrder,
+    isPolling,
+    startPollingForPayment,
+    stopPolling,
+    refetchOrder,
   };
 };

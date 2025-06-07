@@ -54,11 +54,13 @@ export type Order = {
     status: string;
     method: string;
     currency: string;
+    receiptEmail: string;
     preparation: {
       chain?: string;
       payerAddress?: string;
       serializedTransaction?: string;
       stripePublishableKey?: string;
+      stripeClientSecret?: string;
     };
   };
 };

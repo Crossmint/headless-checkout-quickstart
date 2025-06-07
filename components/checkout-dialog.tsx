@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { clsx } from "clsx";
 import type { Weapon } from "../types/weapon";
 import { useCheckout } from "@/hooks/useCheckout";
-import { collectionId } from "@/lib/checkout";
+import { collectionId, isValidEmail } from "@/lib/checkout";
+import { StripePaymentForm } from "./stripe-payment-form";
 
 interface CheckoutDialogProps {
   selectedWeapon: Weapon;
@@ -20,8 +21,17 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethod>("card");
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  const { createOrder, isCreatingOrder } = useCheckout();
+  const {
+    createOrder,
+    isCreatingOrder,
+    order,
+    isPolling,
+    startPollingForPayment,
+    stopPolling,
+    updateOrder,
+  } = useCheckout();
 
   useEffect(() => {
     if (isOpen) {
@@ -41,6 +51,30 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       });
     }
   }, [isOpen, selectedWeapon.templateId, selectedWeapon.price, createOrder]);
+
+  const handlePaymentSuccess = () => {
+    setPaymentError(null);
+    startPollingForPayment();
+  };
+
+  const handlePaymentError = (error: string) => {
+    setPaymentError(error);
+    stopPolling();
+  };
+
+  const handleEmailChange = (email: string) => {
+    if (order && isValidEmail(email)) {
+      updateOrder({
+        recipient: { email },
+      });
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      stopPolling();
+    };
+  }, [stopPolling]);
 
   if (!isOpen) return null;
 
@@ -139,20 +173,56 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         </div>
 
         {/* Payment method content area */}
-        <div className="min-h-[200px] bg-gray-700/20 rounded-xl p-6 flex items-center justify-center">
+        <div className="min-h-[200px] bg-gray-700/20 rounded-xl p-6">
           {isCreatingOrder ? (
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center justify-center h-full gap-4">
               <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
               <p className="text-white/60 text-center">
                 Creating your order...
               </p>
             </div>
+          ) : isPolling ? (
+            <div className="flex flex-col items-center justify-center h-full gap-4">
+              <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              <p className="text-white/60 text-center">Processing payment...</p>
+              {order?.payment?.status === "succeeded" && (
+                <p className="text-green-400 text-center font-medium">
+                  Payment successful! 🎉
+                </p>
+              )}
+              {order?.payment?.status === "failed" && (
+                <p className="text-red-400 text-center font-medium">
+                  Payment failed. Please try again.
+                </p>
+              )}
+            </div>
+          ) : selectedPaymentMethod === "card" &&
+            order?.payment.preparation?.stripePublishableKey ? (
+            <div className="space-y-4">
+              {paymentError && (
+                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3">
+                  <p className="text-red-400 text-sm">{paymentError}</p>
+                </div>
+              )}
+              <StripePaymentForm
+                order={order}
+                onPaymentSuccess={handlePaymentSuccess}
+                onPaymentError={handlePaymentError}
+                onEmailChange={handleEmailChange}
+              />
+            </div>
+          ) : selectedPaymentMethod === "usdc" ? (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-white/60 text-center">
+                USDC payment will be implemented next
+              </p>
+            </div>
           ) : (
-            <p className="text-white/60 text-center">
-              {selectedPaymentMethod === "card"
-                ? "Credit card form will be added here"
-                : "USDC payment form will be added here"}
-            </p>
+            <div className="flex items-center justify-center h-full">
+              <p className="text-white/60 text-center">
+                Preparing payment form...
+              </p>
+            </div>
           )}
         </div>
       </div>
