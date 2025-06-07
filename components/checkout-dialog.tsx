@@ -3,7 +3,9 @@ import { useState, useEffect } from "react";
 import { clsx } from "clsx";
 import type { Weapon } from "../types/weapon";
 import { useCheckout } from "@/hooks/useCheckout";
-import { collectionId } from "@/lib/checkout";
+import { collectionId, isValidEmail } from "@/lib/checkout";
+import { CardPayment } from "./card-payment";
+import { UsdcPayment } from "./usdc-payment";
 
 interface CheckoutDialogProps {
   selectedWeapon: Weapon;
@@ -20,8 +22,17 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethod>("card");
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  const { createOrder, isCreatingOrder } = useCheckout();
+  const {
+    createOrder,
+    isCreatingOrder,
+    order,
+    isPolling,
+    startPollingForPayment,
+    stopPolling,
+    updateOrder,
+  } = useCheckout();
 
   useEffect(() => {
     if (isOpen) {
@@ -41,6 +52,30 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       });
     }
   }, [isOpen, selectedWeapon.templateId, selectedWeapon.price, createOrder]);
+
+  const handlePaymentSuccess = () => {
+    setPaymentError(null);
+    startPollingForPayment();
+  };
+
+  const handlePaymentError = (error: string) => {
+    setPaymentError(error);
+    stopPolling();
+  };
+
+  const handleEmailChange = (email: string) => {
+    if (order && isValidEmail(email)) {
+      updateOrder({
+        recipient: { email },
+      });
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      stopPolling();
+    };
+  }, [stopPolling]);
 
   if (!isOpen) return null;
 
@@ -139,20 +174,27 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         </div>
 
         {/* Payment method content area */}
-        <div className="min-h-[200px] bg-gray-700/20 rounded-xl p-6 flex items-center justify-center">
-          {isCreatingOrder ? (
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              <p className="text-white/60 text-center">
-                Creating your order...
-              </p>
-            </div>
+        <div className="min-h-[200px] bg-gray-700/20 rounded-xl p-6">
+          {selectedPaymentMethod === "card" ? (
+            <CardPayment
+              order={order}
+              isCreatingOrder={isCreatingOrder}
+              isPolling={isPolling}
+              onPaymentSuccess={handlePaymentSuccess}
+              onPaymentError={handlePaymentError}
+              onEmailChange={handleEmailChange}
+              paymentError={paymentError}
+            />
           ) : (
-            <p className="text-white/60 text-center">
-              {selectedPaymentMethod === "card"
-                ? "Credit card form will be added here"
-                : "USDC payment form will be added here"}
-            </p>
+            <UsdcPayment
+              order={order}
+              isCreatingOrder={isCreatingOrder}
+              isPolling={isPolling}
+              onPaymentSuccess={handlePaymentSuccess}
+              onPaymentError={handlePaymentError}
+              onEmailChange={handleEmailChange}
+              paymentError={paymentError}
+            />
           )}
         </div>
       </div>

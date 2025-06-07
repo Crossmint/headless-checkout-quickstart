@@ -54,11 +54,13 @@ export type Order = {
     status: string;
     method: string;
     currency: string;
+    receiptEmail: string;
     preparation: {
       chain?: string;
       payerAddress?: string;
       serializedTransaction?: string;
       stripePublishableKey?: string;
+      stripeClientSecret?: string;
     };
   };
 };
@@ -84,3 +86,13 @@ export type CreateOrderResponse = {
   clientSecret: string;
   order: Order;
 };
+
+export interface PaymentComponentProps {
+  order: Order | null;
+  isCreatingOrder: boolean;
+  isPolling: boolean;
+  onPaymentSuccess: () => void;
+  onPaymentError: (error: string) => void;
+  onEmailChange: (email: string) => void;
+  paymentError?: string | null;
+}
