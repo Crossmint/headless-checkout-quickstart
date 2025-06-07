@@ -2,6 +2,7 @@ export interface Weapon {
   id: string;
   name: string;
   price: string;
+  templateId: string; // change this with your custom template id from crossmint
   icon: string;
 }
 

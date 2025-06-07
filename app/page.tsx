@@ -5,29 +5,7 @@ import { useState } from "react";
 import { Button } from "../components/button";
 import { WeaponSelection } from "../components/weapon-selection";
 import { CheckoutDialog } from "../components/checkout-dialog";
-import type { Weapon } from "../types/weapon";
-
-// Weapon data - keeping it in sync with weapon-selection.tsx
-const WEAPONS: Weapon[] = [
-  {
-    id: "gods-sword",
-    name: "God's sword",
-    price: "$0.53",
-    icon: "/sword.svg",
-  },
-  {
-    id: "elves-axe-silver",
-    name: "Elves axe - Silver",
-    price: "$0.53",
-    icon: "/axe.svg",
-  },
-  {
-    id: "magic-potion",
-    name: "Magic potion",
-    price: "$0.53",
-    icon: "/elixir.svg",
-  },
-];
+import { WEAPONS } from "@/lib/checkout";
 
 export default function Home() {
   const [selectedWeapon, setSelectedWeapon] = useState("gods-sword");

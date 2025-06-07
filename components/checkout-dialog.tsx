@@ -1,7 +1,9 @@
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { clsx } from "clsx";
 import type { Weapon } from "../types/weapon";
+import { useCheckout } from "@/hooks/useCheckout";
+import { collectionId } from "@/lib/checkout";
 
 interface CheckoutDialogProps {
   selectedWeapon: Weapon;
@@ -18,6 +20,27 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethod>("card");
+
+  const { createOrder, isCreatingOrder } = useCheckout();
+
+  useEffect(() => {
+    if (isOpen) {
+      createOrder({
+        payment: {
+          method: "stripe-payment-element",
+          currency: "usd",
+        },
+        lineItems: [
+          {
+            collectionLocator: `crossmint:${collectionId}:${selectedWeapon.templateId}`,
+            callData: {
+              totalPrice: selectedWeapon.price,
+            },
+          },
+        ],
+      });
+    }
+  }, [isOpen, selectedWeapon.templateId, selectedWeapon.price, createOrder]);
 
   if (!isOpen) return null;
 
@@ -117,11 +140,20 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
         {/* Payment method content area */}
         <div className="min-h-[200px] bg-gray-700/20 rounded-xl p-6 flex items-center justify-center">
-          <p className="text-white/60 text-center">
-            {selectedPaymentMethod === "card"
-              ? "Credit card form will be added here"
-              : "USDC payment form will be added here"}
-          </p>
+          {isCreatingOrder ? (
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              <p className="text-white/60 text-center">
+                Creating your order...
+              </p>
+            </div>
+          ) : (
+            <p className="text-white/60 text-center">
+              {selectedPaymentMethod === "card"
+                ? "Credit card form will be added here"
+                : "USDC payment form will be added here"}
+            </p>
+          )}
         </div>
       </div>
     </div>
