@@ -1,21 +1,60 @@
 import type { PaymentComponentProps } from "@/types/checkout";
 import { PaymentError, PaymentLoading, PaymentSuccess } from "./payment-status";
-import {
-  CrossmintAuthProvider,
-  CrossmintProvider,
-  CrossmintWalletProvider,
-} from "@crossmint/client-sdk-react-ui";
-import { apiKey } from "@/lib/checkout";
 import { Button } from "@/components/button";
 import { useCrossmintWallet } from "@/hooks/useCrossmintWallet";
+import { useEffect, useRef, useState } from "react";
+import { useSendTransaction } from "wagmi";
+import type { Hex } from "viem";
+import { parseTransaction } from "viem";
 
-const UsdcPaymentComponent: React.FC<PaymentComponentProps> = ({
+export const UsdcPayment: React.FC<PaymentComponentProps> = ({
   order,
   isCreatingOrder,
   isPolling,
+  onWalletChange,
+  onPaymentSuccess,
+  onPaymentError,
 }) => {
   const { user, login, logout, isWalletLoading, wallet, signerAddress } =
     useCrossmintWallet();
+  // TODO: use crossmint wallet to send transaction
+  const { data: hash, isPending, sendTransactionAsync } = useSendTransaction();
+
+  const onWalletChangeRef = useRef(onWalletChange);
+  onWalletChangeRef.current = onWalletChange;
+
+  useEffect(() => {
+    // update if address exists and has changed
+    if (
+      signerAddress &&
+      signerAddress !== order?.payment?.preparation?.payerAddress
+    ) {
+      onWalletChangeRef.current?.(signerAddress);
+    }
+  }, [signerAddress, order?.payment?.preparation?.payerAddress]);
+
+  const signAndSendTransaction = async () => {
+    if (!order?.payment?.preparation?.serializedTransaction) {
+      return;
+    }
+    try {
+      const serializedTxn = order.payment.preparation
+        .serializedTransaction as Hex;
+      const txn = parseTransaction(serializedTxn);
+
+      await sendTransactionAsync({
+        to: txn.to,
+        value: txn.value,
+        data: txn.data,
+        chainId: txn.chainId,
+      });
+      onPaymentSuccess();
+    } catch (err) {
+      onPaymentError(
+        err instanceof Error ? err.message : "An unexpected error occurred"
+      );
+    }
+  };
 
   if (!user) {
     return <Button onClick={login}>CONNECT WALLET</Button>;
@@ -30,7 +69,7 @@ const UsdcPaymentComponent: React.FC<PaymentComponentProps> = ({
   }
 
   if (isPolling) {
-    return <PaymentLoading message="Processing crypto payment..." />;
+    return <PaymentLoading message="Processing payment..." />;
   }
 
   if (order?.payment?.status === "completed") {
@@ -41,43 +80,20 @@ const UsdcPaymentComponent: React.FC<PaymentComponentProps> = ({
     return <PaymentError message="Payment failed. Please try again." />;
   }
 
+  if (order?.payment?.status === "crypto-payer-insufficient-funds") {
+    return <PaymentError message="Insufficient funds." />;
+  }
+
   return (
     <div className="flex flex-col items-center justify-center h-full gap-6">
       <p>{signerAddress}</p>
       <Button onClick={logout}>LOGOUT</Button>
       <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center">
-        <svg
-          className="w-8 h-8 text-blue-400"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-          aria-hidden="true"
-        >
-          <path
-            fillRule="evenodd"
-            d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
-            clipRule="evenodd"
-          />
-        </svg>
-      </div>
-      <div className="text-center">
-        <h3 className="text-white text-lg font-semibold mb-2">USDC Payment</h3>
-        <p className="text-white/60">Coming soon! Pay with crypto.</p>
+        <Button disabled={isPending} onClick={signAndSendTransaction}>
+          PAY
+        </Button>
+        {hash && <p>Transaction hash: {hash}</p>}
       </div>
     </div>
-  );
-};
-
-export const UsdcPayment: React.FC<PaymentComponentProps> = (props) => {
-  return (
-    <CrossmintProvider apiKey={apiKey}>
-      <CrossmintAuthProvider
-        authModalTitle="Headless Quickstart"
-        loginMethods={["web3:evm-only"]}
-      >
-        <CrossmintWalletProvider>
-          <UsdcPaymentComponent {...props} />
-        </CrossmintWalletProvider>
-      </CrossmintAuthProvider>
-    </CrossmintProvider>
   );
 };

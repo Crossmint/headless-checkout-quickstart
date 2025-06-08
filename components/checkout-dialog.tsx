@@ -6,6 +6,7 @@ import { useCheckout } from "@/hooks/useCheckout";
 import { collectionId, isValidEmail } from "@/lib/checkout";
 import { CardPayment } from "./card-payment";
 import { UsdcPayment } from "./usdc-payment";
+import { isAddress } from "viem";
 
 interface CheckoutDialogProps {
   selectedWeapon: Weapon;
@@ -35,7 +36,10 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   } = useCheckout();
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) {
+      return;
+    }
+    if (selectedPaymentMethod === "card") {
       createOrder({
         payment: {
           method: "stripe-payment-element",
@@ -51,7 +55,13 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         ],
       });
     }
-  }, [isOpen, selectedWeapon.templateId, selectedWeapon.price, createOrder]);
+  }, [
+    isOpen,
+    selectedWeapon.templateId,
+    selectedWeapon.price,
+    createOrder,
+    selectedPaymentMethod,
+  ]);
 
   const handlePaymentSuccess = () => {
     setPaymentError(null);
@@ -67,6 +77,29 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     if (order && isValidEmail(email)) {
       updateOrder({
         recipient: { email },
+      });
+    }
+  };
+
+  const handleWalletChange = (walletAddress: string) => {
+    if (order && isAddress(walletAddress)) {
+      createOrder({
+        recipient: {
+          walletAddress,
+        },
+        payment: {
+          method: "base-sepolia",
+          currency: "usdc",
+          payerAddress: walletAddress,
+        },
+        lineItems: [
+          {
+            collectionLocator: `crossmint:${collectionId}:${selectedWeapon.templateId}`,
+            callData: {
+              totalPrice: selectedWeapon.price,
+            },
+          },
+        ],
       });
     }
   };
@@ -192,7 +225,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               isPolling={isPolling}
               onPaymentSuccess={handlePaymentSuccess}
               onPaymentError={handlePaymentError}
-              onEmailChange={handleEmailChange}
+              onWalletChange={handleWalletChange}
               paymentError={paymentError}
             />
           )}
