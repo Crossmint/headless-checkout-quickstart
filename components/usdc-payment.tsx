@@ -1,11 +1,30 @@
 import type { PaymentComponentProps } from "@/types/checkout";
 import { PaymentError, PaymentLoading, PaymentSuccess } from "./payment-status";
+import {
+  CrossmintAuthProvider,
+  CrossmintProvider,
+  CrossmintWalletProvider,
+} from "@crossmint/client-sdk-react-ui";
+import { apiKey } from "@/lib/checkout";
+import { Button } from "@/components/button";
+import { useCrossmintWallet } from "@/hooks/useCrossmintWallet";
 
-export const UsdcPayment: React.FC<PaymentComponentProps> = ({
+const UsdcPaymentComponent: React.FC<PaymentComponentProps> = ({
   order,
   isCreatingOrder,
   isPolling,
 }) => {
+  const { user, login, logout, isWalletLoading, wallet, signerAddress } =
+    useCrossmintWallet();
+
+  if (!user) {
+    return <Button onClick={login}>CONNECT WALLET</Button>;
+  }
+
+  if (isWalletLoading) {
+    return <PaymentLoading message="Connecting wallet..." />;
+  }
+
   if (isCreatingOrder) {
     return <PaymentLoading message="Creating your order..." />;
   }
@@ -24,6 +43,8 @@ export const UsdcPayment: React.FC<PaymentComponentProps> = ({
 
   return (
     <div className="flex flex-col items-center justify-center h-full gap-6">
+      <p>{signerAddress}</p>
+      <Button onClick={logout}>LOGOUT</Button>
       <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center">
         <svg
           className="w-8 h-8 text-blue-400"
@@ -43,5 +64,20 @@ export const UsdcPayment: React.FC<PaymentComponentProps> = ({
         <p className="text-white/60">Coming soon! Pay with crypto.</p>
       </div>
     </div>
+  );
+};
+
+export const UsdcPayment: React.FC<PaymentComponentProps> = (props) => {
+  return (
+    <CrossmintProvider apiKey={apiKey}>
+      <CrossmintAuthProvider
+        authModalTitle="Headless Quickstart"
+        loginMethods={["web3:evm-only"]}
+      >
+        <CrossmintWalletProvider>
+          <UsdcPaymentComponent {...props} />
+        </CrossmintWalletProvider>
+      </CrossmintAuthProvider>
+    </CrossmintProvider>
   );
 };

@@ -1,7 +1,7 @@
 import type { CreateOrderResponse, Order, OrderInput } from "@/types/checkout";
 import type { Weapon } from "@/types/weapon";
 
-const apiKey = process.env.NEXT_PUBLIC_CROSSMINT_API_KEY ?? "";
+export const apiKey = process.env.NEXT_PUBLIC_CROSSMINT_API_KEY ?? "";
 export const collectionId =
   process.env.NEXT_PUBLIC_CROSSMINT_COLLECTION_ID ?? "";
 
