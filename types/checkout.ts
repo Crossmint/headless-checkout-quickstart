@@ -67,9 +67,11 @@ export type Order = {
 
 export type OrderInput = {
   payment: {
-    method: "stripe-payment-element";
+    method: string;
     receiptEmail?: string;
     currency: string;
+    payerAddress?: string;
+    walletAddress?: string;
   };
   lineItems: {
     collectionLocator: string;
@@ -78,7 +80,8 @@ export type OrderInput = {
     };
   }[];
   recipient?: {
-    email: string;
+    email?: string;
+    walletAddress?: string;
   };
 };
 
@@ -93,6 +96,7 @@ export interface PaymentComponentProps {
   isPolling: boolean;
   onPaymentSuccess: () => void;
   onPaymentError: (error: string) => void;
-  onEmailChange: (email: string) => void;
+  onEmailChange?: (email: string) => void;
+  onWalletChange?: (walletAddress: string) => void;
   paymentError?: string | null;
 }
