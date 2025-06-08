@@ -45,7 +45,7 @@ export const CardPayment: React.FC<PaymentComponentProps> = ({
         order={order}
         onPaymentSuccess={onPaymentSuccess}
         onPaymentError={onPaymentError}
-        onEmailChange={onEmailChange}
+        onEmailChange={(email: string) => onEmailChange?.(email)}
       />
     </div>
   );
