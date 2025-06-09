@@ -1,11 +1,12 @@
 import type { PaymentComponentProps } from "@/types/checkout";
 import { PaymentError, PaymentLoading, PaymentSuccess } from "./payment-status";
 import { Button } from "@/components/button";
-import { useCrossmintWallet } from "@/hooks/useCrossmintWallet";
-import { useEffect, useRef, useState } from "react";
-import { useSendTransaction } from "wagmi";
+import { useEffect, useRef } from "react";
+import { useAccount, useSendTransaction } from "wagmi";
 import type { Hex } from "viem";
 import { parseTransaction } from "viem";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { baseSepolia } from "viem/chains";
 
 export const UsdcPayment: React.FC<PaymentComponentProps> = ({
   order,
@@ -15,23 +16,18 @@ export const UsdcPayment: React.FC<PaymentComponentProps> = ({
   onPaymentSuccess,
   onPaymentError,
 }) => {
-  const { user, login, logout, isWalletLoading, wallet, signerAddress } =
-    useCrossmintWallet();
-  // TODO: use crossmint wallet to send transaction
   const { data: hash, isPending, sendTransactionAsync } = useSendTransaction();
+  const { address, chainId } = useAccount();
 
   const onWalletChangeRef = useRef(onWalletChange);
   onWalletChangeRef.current = onWalletChange;
 
   useEffect(() => {
     // update if address exists and has changed
-    if (
-      signerAddress &&
-      signerAddress !== order?.payment?.preparation?.payerAddress
-    ) {
-      onWalletChangeRef.current?.(signerAddress);
+    if (address && address !== order?.payment?.preparation?.payerAddress) {
+      onWalletChangeRef.current?.(address);
     }
-  }, [signerAddress, order?.payment?.preparation?.payerAddress]);
+  }, [address, order?.payment?.preparation?.payerAddress]);
 
   const signAndSendTransaction = async () => {
     if (!order?.payment?.preparation?.serializedTransaction) {
@@ -56,14 +52,6 @@ export const UsdcPayment: React.FC<PaymentComponentProps> = ({
     }
   };
 
-  if (!user) {
-    return <Button onClick={login}>CONNECT WALLET</Button>;
-  }
-
-  if (isWalletLoading) {
-    return <PaymentLoading message="Connecting wallet..." />;
-  }
-
   if (isCreatingOrder) {
     return <PaymentLoading message="Creating your order..." />;
   }
@@ -80,20 +68,20 @@ export const UsdcPayment: React.FC<PaymentComponentProps> = ({
     return <PaymentError message="Payment failed. Please try again." />;
   }
 
-  if (order?.payment?.status === "crypto-payer-insufficient-funds") {
-    return <PaymentError message="Insufficient funds." />;
-  }
-
   return (
     <div className="flex flex-col items-center justify-center h-full gap-6">
-      <p>{signerAddress}</p>
-      <Button onClick={logout}>LOGOUT</Button>
-      <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center">
-        <Button disabled={isPending} onClick={signAndSendTransaction}>
-          PAY
-        </Button>
-        {hash && <p>Transaction hash: {hash}</p>}
-      </div>
+      <ConnectButton />
+      {order?.payment?.status === "crypto-payer-insufficient-funds" && (
+        <PaymentError message="Insufficient funds." />
+      )}
+      {address && chainId === baseSepolia.id && (
+        <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center">
+          <Button disabled={isPending} onClick={signAndSendTransaction}>
+            PAY
+          </Button>
+          {hash && <p>Transaction hash: {hash}</p>}
+        </div>
+      )}
     </div>
   );
 };
