@@ -1,7 +1,6 @@
 import type { PaymentComponentProps } from "@/types/checkout";
 import { PaymentError, PaymentLoading, PaymentSuccess } from "./payment-status";
 import { Button } from "@/components/button";
-import { useEffect, useRef } from "react";
 import { useAccount, useSendTransaction } from "wagmi";
 import type { Hex } from "viem";
 import { parseTransaction } from "viem";
@@ -12,22 +11,11 @@ export const UsdcPayment: React.FC<PaymentComponentProps> = ({
   order,
   isCreatingOrder,
   isPolling,
-  onWalletChange,
   onPaymentSuccess,
   onPaymentError,
 }) => {
   const { data: hash, isPending, sendTransactionAsync } = useSendTransaction();
-  const { address, chainId } = useAccount();
-
-  const onWalletChangeRef = useRef(onWalletChange);
-  onWalletChangeRef.current = onWalletChange;
-
-  useEffect(() => {
-    // update if address exists and has changed
-    if (address && address !== order?.payment?.preparation?.payerAddress) {
-      onWalletChangeRef.current?.(address);
-    }
-  }, [address, order?.payment?.preparation?.payerAddress]);
+  const { address: walletAddress, chainId } = useAccount();
 
   const signAndSendTransaction = async () => {
     if (!order?.payment?.preparation?.serializedTransaction) {
@@ -52,10 +40,6 @@ export const UsdcPayment: React.FC<PaymentComponentProps> = ({
     }
   };
 
-  if (isCreatingOrder) {
-    return <PaymentLoading message="Creating your order..." />;
-  }
-
   if (isPolling) {
     return <PaymentLoading message="Processing payment..." />;
   }
@@ -74,7 +58,7 @@ export const UsdcPayment: React.FC<PaymentComponentProps> = ({
       {order?.payment?.status === "crypto-payer-insufficient-funds" && (
         <PaymentError message="Insufficient funds." />
       )}
-      {address && chainId === baseSepolia.id && (
+      {walletAddress && chainId === baseSepolia.id && (
         <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center">
           <Button disabled={isPending} onClick={signAndSendTransaction}>
             PAY

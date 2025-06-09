@@ -7,6 +7,7 @@ import { collectionId, isValidEmail } from "@/lib/checkout";
 import { CardPayment } from "./card-payment";
 import { UsdcPayment } from "./usdc-payment";
 import { isAddress } from "viem";
+import { useAccount } from "wagmi";
 
 interface CheckoutDialogProps {
   selectedWeapon: Weapon;
@@ -24,6 +25,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethod>("card");
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const { address: walletAddress } = useAccount();
 
   const {
     createOrder,
@@ -39,29 +41,23 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     if (!isOpen) {
       return;
     }
-    if (selectedPaymentMethod === "card") {
-      createOrder({
-        payment: {
-          method: "stripe-payment-element",
-          currency: "usd",
-        },
-        lineItems: [
-          {
-            collectionLocator: `crossmint:${collectionId}:${selectedWeapon.templateId}`,
-            callData: {
-              totalPrice: selectedWeapon.price,
-            },
+    // create order on mount
+    createOrder({
+      recipient: { email: "buyer@crossmint.com" },
+      payment: {
+        method: "stripe-payment-element",
+        currency: "usd",
+      },
+      lineItems: [
+        {
+          collectionLocator: `crossmint:${collectionId}`,
+          callData: {
+            totalPrice: selectedWeapon.price,
           },
-        ],
-      });
-    }
-  }, [
-    isOpen,
-    selectedWeapon.templateId,
-    selectedWeapon.price,
-    createOrder,
-    selectedPaymentMethod,
-  ]);
+        },
+      ],
+    });
+  }, [isOpen, selectedWeapon.price, createOrder]);
 
   const handlePaymentSuccess = () => {
     setPaymentError(null);
@@ -73,17 +69,31 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     stopPolling();
   };
 
-  const handleEmailChange = (email: string) => {
-    if (order && isValidEmail(email)) {
-      updateOrder({
-        recipient: { email },
-      });
+  useEffect(() => {
+    if (!order) {
+      return;
     }
-  };
 
-  const handleWalletChange = (walletAddress: string) => {
-    if (order && isAddress(walletAddress)) {
-      createOrder({
+    if (
+      selectedPaymentMethod === "card" &&
+      order.payment.method !== "stripe-payment-element"
+    ) {
+      updateOrder({
+        recipient: { email: "buyer@crossmint.com" },
+        payment: {
+          method: "stripe-payment-element",
+          currency: "usd",
+        },
+      });
+      return;
+    }
+
+    if (
+      selectedPaymentMethod === "usdc" &&
+      order.payment.method !== "base-sepolia" &&
+      order.payment.preparation.payerAddress !== walletAddress
+    ) {
+      updateOrder({
         recipient: {
           walletAddress,
         },
@@ -92,17 +102,9 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
           currency: "usdc",
           payerAddress: walletAddress,
         },
-        lineItems: [
-          {
-            collectionLocator: `crossmint:${collectionId}:${selectedWeapon.templateId}`,
-            callData: {
-              totalPrice: selectedWeapon.price,
-            },
-          },
-        ],
       });
     }
-  };
+  }, [selectedPaymentMethod, order, updateOrder, walletAddress]);
 
   useEffect(() => {
     return () => {
@@ -114,7 +116,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white/10 rounded-2xl p-8 max-w-md w-full relative md:backdrop-blur-lg border border-white/20">
+      <div className="bg-white/10 rounded-2xl p-8 max-w-lg w-full relative md:backdrop-blur-lg border border-white/20">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -215,7 +217,6 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               isPolling={isPolling}
               onPaymentSuccess={handlePaymentSuccess}
               onPaymentError={handlePaymentError}
-              onEmailChange={handleEmailChange}
               paymentError={paymentError}
             />
           ) : (
@@ -225,7 +226,6 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               isPolling={isPolling}
               onPaymentSuccess={handlePaymentSuccess}
               onPaymentError={handlePaymentError}
-              onWalletChange={handleWalletChange}
               paymentError={paymentError}
             />
           )}

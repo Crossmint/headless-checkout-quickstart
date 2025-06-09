@@ -3,39 +3,21 @@ import {
   useStripe,
   useElements,
   PaymentElement,
-  LinkAuthenticationElement,
   Elements,
 } from "@stripe/react-stripe-js";
-import type { Order } from "@/types/checkout";
-import {
-  type Appearance,
-  type StripeElementsOptions,
-  loadStripe,
-} from "@stripe/stripe-js";
+import type { Order, PaymentComponentProps } from "@/types/checkout";
+import { type Appearance, loadStripe } from "@stripe/stripe-js";
 
 interface StripePaymentFormProps {
-  order: Order;
+  stripeClientSecret: string;
+  stripePublishableKey: string;
   onPaymentSuccess: () => void;
   onPaymentError: (error: string) => void;
-  onEmailChange: (email: string) => void;
 }
 
-const stripeAppearance: Appearance = {
-  theme: "night",
-  variables: {
-    colorPrimary: "#3b82f6",
-    colorBackground: "#374151",
-    colorText: "#ffffff",
-    colorDanger: "#ef4444",
-  },
-};
-
-const PaymentForm: React.FC<StripePaymentFormProps> = ({
-  order,
-  onPaymentSuccess,
-  onPaymentError,
-  onEmailChange,
-}) => {
+const PaymentForm: React.FC<
+  Omit<StripePaymentFormProps, "stripeClientSecret" | "stripePublishableKey">
+> = ({ onPaymentSuccess, onPaymentError }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -43,24 +25,15 @@ const PaymentForm: React.FC<StripePaymentFormProps> = ({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (
-      !stripe ||
-      !elements ||
-      !order.payment.preparation?.stripeClientSecret
-    ) {
+    if (!stripe || !elements) {
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      elements.update({
-        customerSessionClientSecret:
-          order.payment.preparation.stripeClientSecret,
-      });
       const { error: submitError } = await elements.submit();
       const { error: confirmError } = await stripe.confirmPayment({
-        clientSecret: order.payment.preparation.stripeClientSecret,
         elements,
         confirmParams: {
           return_url: window.location.href,
@@ -84,32 +57,9 @@ const PaymentForm: React.FC<StripePaymentFormProps> = ({
     }
   };
 
-  const handleEmailChange = (event: { value: { email: string } }) => {
-    if (event.value?.email) {
-      onEmailChange(event.value.email);
-    }
-  };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <LinkAuthenticationElement
-        onChange={handleEmailChange}
-        options={{
-          defaultValues: {
-            email: order.payment?.receiptEmail || "",
-          },
-        }}
-      />
-
-      <PaymentElement
-        options={{
-          layout: "tabs",
-          wallets: {
-            applePay: "auto",
-            googlePay: "auto",
-          },
-        }}
-      />
+      <PaymentElement className="w-full" />
 
       <button
         type="submit"
@@ -123,25 +73,43 @@ const PaymentForm: React.FC<StripePaymentFormProps> = ({
 };
 
 export const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
-  order,
+  stripeClientSecret,
+  stripePublishableKey,
   ...props
 }) => {
-  const stripePromise = loadStripe(
-    order?.payment.preparation?.stripePublishableKey ?? ""
-  );
-
-  const elementOptions: StripeElementsOptions = {
-    appearance: stripeAppearance,
-    mode: "payment",
-    currency: "usd",
-    amount: Number(order?.quote?.totalPrice?.amount ?? 0) * 100,
-    capture_method: "manual",
-    payment_method_types: ["card"],
-  };
+  const stripePromise = loadStripe(stripePublishableKey);
 
   return (
-    <Elements stripe={stripePromise} options={elementOptions}>
-      <PaymentForm order={order} {...props} />
+    <Elements
+      key={`${stripeClientSecret}-${stripePublishableKey}`}
+      stripe={stripePromise}
+      options={{
+        clientSecret: stripeClientSecret,
+        appearance: {
+          variables: {
+            colorPrimary: "#3b82f6",
+            colorBackground: "#374151",
+            colorText: "#ffffff",
+            colorDanger: "#ef4444",
+          },
+          rules: {
+            ".Label": {
+              color: "#fff",
+              fontSize: "0px",
+              padding: "0px",
+              margin: "0px",
+            },
+            ".Tab": {
+              border: "none",
+            },
+            ".Input": {
+              border: "none",
+            },
+          },
+        },
+      }}
+    >
+      <PaymentForm {...props} />
     </Elements>
   );
 };

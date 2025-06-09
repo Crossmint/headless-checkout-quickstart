@@ -94,9 +94,7 @@ export interface PaymentComponentProps {
   order: Order | null;
   isCreatingOrder: boolean;
   isPolling: boolean;
+  paymentError?: string | null;
   onPaymentSuccess: () => void;
   onPaymentError: (error: string) => void;
-  onEmailChange?: (email: string) => void;
-  onWalletChange?: (walletAddress: string) => void;
-  paymentError?: string | null;
 }
