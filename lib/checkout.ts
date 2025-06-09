@@ -18,21 +18,18 @@ export const WEAPONS: Weapon[] = [
     id: "gods-sword",
     name: "God's sword",
     price: "0.53",
-    templateId: "07826433-9bac-4aa7-ae71-c06a49be6573",
     icon: "/sword.svg",
   },
   {
     id: "elves-axe-silver",
     name: "Elves axe - Silver",
     price: "0.53",
-    templateId: "f5aa1fdc-a404-4cbd-b82b-92b58f860c99",
     icon: "/axe.svg",
   },
   {
     id: "magic-potion",
     name: "Magic potion",
     price: "0.53",
-    templateId: "51153eec-ccad-40d9-b680-deb8a0216fa9",
     icon: "/elixir.svg",
   },
 ];

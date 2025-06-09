@@ -8,7 +8,6 @@ export const CardPayment: React.FC<PaymentComponentProps> = ({
   isPolling,
   onPaymentSuccess,
   onPaymentError,
-  onEmailChange,
   paymentError,
 }) => {
   if (isCreatingOrder) {
@@ -31,21 +30,19 @@ export const CardPayment: React.FC<PaymentComponentProps> = ({
     );
   }
 
-  if (!order) {
-    return <PaymentLoading message="Preparing payment..." />;
-  }
-
-  if (!order.payment.preparation?.stripePublishableKey) {
+  if (!order?.payment.preparation?.stripePublishableKey) {
     return <PaymentLoading message="Setting up payment..." />;
   }
 
   return (
     <div className="space-y-4">
       <StripePaymentForm
-        order={order}
+        stripeClientSecret={order.payment.preparation?.stripeClientSecret ?? ""}
+        stripePublishableKey={
+          order.payment.preparation?.stripePublishableKey ?? ""
+        }
         onPaymentSuccess={onPaymentSuccess}
         onPaymentError={onPaymentError}
-        onEmailChange={(email: string) => onEmailChange?.(email)}
       />
     </div>
   );
