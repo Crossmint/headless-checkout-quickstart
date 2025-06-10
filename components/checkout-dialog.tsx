@@ -160,7 +160,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white/10 rounded-2xl p-8 max-w-lg w-full relative md:backdrop-blur-lg border border-white/20">
+      <div className="bg-white/10 rounded-2xl p-8 max-w-lg w-full relative backdrop-blur-lg border border-white/20">
         {/* Close button */}
         <button
           onClick={onClose}
