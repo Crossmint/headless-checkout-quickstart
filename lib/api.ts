@@ -133,3 +133,42 @@ export const getOrder = async (orderId: string, clientSecret: string) => {
     };
   }
 };
+
+export const pollOrder = async (orderId: string, clientSecret: string) => {
+  try {
+    let order = await getOrder(orderId, clientSecret);
+
+    while (true) {
+      if (!order.success || !order.order) {
+        break;
+      }
+
+      const isCompleted =
+        order.order.payment.status === "completed" &&
+        order.order.phase === "completed";
+
+      const isFailed = order.order.payment.status === "failed";
+
+      if (isCompleted || isFailed) {
+        break;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      order = await getOrder(orderId, clientSecret);
+    }
+
+    return {
+      success: order.success,
+      order: order.order,
+      error: order.error,
+    };
+  } catch (error) {
+    console.error(error);
+
+    return {
+      success: false,
+      error: error,
+    };
+  }
+};

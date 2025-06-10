@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { clsx } from "clsx";
 import type { Weapon } from "../types/weapon";
 import type { Order } from "@/types/checkout";
-import { collectionId, createOrder, updateOrder, getOrder } from "@/lib/api";
+import { collectionId, createOrder, updateOrder, pollOrder } from "@/lib/api";
 import { CardPayment } from "./card-payment";
 import { CryptoPayment } from "./crypto-payment";
 import { CheckoutStatus } from "./checkout-status";
@@ -16,6 +16,8 @@ interface CheckoutDialogProps {
 }
 
 type PaymentMethod = "card" | "crypto";
+
+const emailAddress = "buyer@crossmint.com";
 
 export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   selectedWeapon,
@@ -35,7 +37,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
     const initializeOrder = async () => {
       const result = await createOrder({
-        recipient: { email: "buyer@crossmint.com" },
+        recipient: { email: emailAddress },
         payment: {
           method: "stripe-payment-element",
           currency: "usd",
@@ -57,6 +59,13 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     };
 
     initializeOrder();
+
+    return () => {
+      setSelectedPaymentMethod("card");
+      setOrder(null);
+      setClientSecret(null);
+      setIsPolling(false);
+    };
   }, [isOpen, selectedWeapon.price]);
 
   // update order when payment method changes
@@ -70,7 +79,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         order.payment.method !== "stripe-payment-element"
       ) {
         const result = await updateOrder(order.orderId, clientSecret, {
-          recipient: { email: "buyer@crossmint.com" },
+          recipient: { email: emailAddress },
           payment: {
             method: "stripe-payment-element",
             currency: "usd",
@@ -85,8 +94,8 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       // handle crypto payment method update
       if (
         selectedPaymentMethod === "crypto" &&
-        order.payment.method !== "base-sepolia" &&
-        order?.recipient?.walletAddress !== walletAddress
+        order?.payment?.preparation?.payerAddress?.toLowerCase() !==
+          walletAddress?.toLowerCase()
       ) {
         const result = await updateOrder(order.orderId, clientSecret, {
           recipient: { walletAddress },
@@ -106,56 +115,41 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     updatePaymentMethod();
   }, [selectedPaymentMethod, order, clientSecret, walletAddress]);
 
-  // poll for payment status
-  useEffect(() => {
-    if (!isPolling || !order || !clientSecret) return;
+  const handlePaymentSuccess = async () => {
+    if (!order || !clientSecret) return;
 
-    const pollInterval = setInterval(async () => {
-      const result = await getOrder(order.orderId, clientSecret);
+    setIsPolling(true);
+
+    try {
+      const result = await pollOrder(order.orderId, clientSecret);
       if (result.success && result.order) {
         setOrder(result.order);
-
-        // stop polling when payment is completed or failed
-        if (
-          (result.order.payment.status === "completed" &&
-            result.order.phase === "completed") ||
-          result.order.payment.status === "failed"
-        ) {
-          setIsPolling(false);
-        }
       }
-    }, 1000);
-
-    return () => clearInterval(pollInterval);
-  }, [isPolling, order, clientSecret]);
+    } catch (error) {
+      console.error("Polling error:", error);
+    } finally {
+      setIsPolling(false);
+    }
+  };
 
   const getCheckoutStatus = () => {
     if (!order) {
-      return { status: "loading" as const, message: "Creating your order..." };
-    }
-    if (isPolling && order.phase === "delivery") {
-      return { status: "loading" as const, message: "Delivering your item..." };
+      return { status: "loading", message: "Creating your order..." };
     }
     if (isPolling) {
-      return { status: "loading" as const, message: "Processing payment..." };
+      return { status: "loading", message: "Processing payment..." };
     }
     if (order.payment?.status === "completed") {
-      return { status: "success" as const, message: "Payment successful! 🎉" };
+      return { status: "success", message: "Payment successful! 🎉" };
     }
     if (order.payment?.status === "failed") {
       return {
-        status: "error" as const,
+        status: "error",
         message: "Payment failed. Please try again.",
       };
     }
-    if (
-      selectedPaymentMethod === "card" &&
-      !order.payment.preparation?.stripePublishableKey
-    ) {
-      return { status: "loading" as const, message: "Setting up payment..." };
-    }
     if (order.payment?.status === "crypto-payer-insufficient-funds") {
-      return { status: "error" as const, message: "Insufficient funds." };
+      return { status: "error", message: "Insufficient funds." };
     }
     return null;
   };
@@ -260,36 +254,50 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
         {/* Payment method content area */}
         <div className="min-h-[200px] bg-gray-700/20 rounded-xl p-6">
-          {checkoutStatus ? (
+          {checkoutStatus && checkoutStatus?.status !== "error" ? (
             <CheckoutStatus
-              status={checkoutStatus.status}
-              message={checkoutStatus.message}
-            />
-          ) : selectedPaymentMethod === "card" ? (
-            <CardPayment
-              stripePublishableKey={
-                order?.payment.preparation?.stripePublishableKey || null
-              }
-              stripeClientSecret={
-                order?.payment.preparation?.stripeClientSecret || null
-              }
-              onSuccess={() => setIsPolling(true)}
-              onError={(error) => {
-                console.error("Card payment error:", error);
-                setIsPolling(false);
-              }}
+              status={checkoutStatus?.status}
+              message={checkoutStatus?.message}
             />
           ) : (
-            <CryptoPayment
-              serializedTransaction={
-                order?.payment.preparation?.serializedTransaction || null
-              }
-              onSuccess={() => setIsPolling(true)}
-              onError={(error) => {
-                console.error("Crypto payment error:", error);
-                setIsPolling(false);
-              }}
-            />
+            <>
+              {checkoutStatus && checkoutStatus?.status === "error" && (
+                <div className="flex flex-col items-center justify-center h-full gap-4">
+                  <p className="text-red-400 text-center">
+                    {checkoutStatus.message}
+                  </p>
+                </div>
+              )}
+
+              {selectedPaymentMethod === "card" && (
+                <CardPayment
+                  stripePublishableKey={
+                    order?.payment.preparation?.stripePublishableKey || null
+                  }
+                  stripeClientSecret={
+                    order?.payment.preparation?.stripeClientSecret || null
+                  }
+                  onSuccess={handlePaymentSuccess}
+                  onError={(error) => {
+                    console.error("Card payment error:", error);
+                    setIsPolling(false);
+                  }}
+                />
+              )}
+
+              {selectedPaymentMethod === "crypto" && (
+                <CryptoPayment
+                  serializedTransaction={
+                    order?.payment.preparation?.serializedTransaction || null
+                  }
+                  onSuccess={handlePaymentSuccess}
+                  onError={(error) => {
+                    console.error("Crypto payment error:", error);
+                    setIsPolling(false);
+                  }}
+                />
+              )}
+            </>
           )}
         </div>
       </div>
