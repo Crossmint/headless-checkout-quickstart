@@ -1,49 +1,118 @@
-import type { PaymentComponentProps } from "@/types/checkout";
-import { PaymentLoading, PaymentSuccess, PaymentError } from "./payment-status";
-import { StripePaymentForm } from "./stripe-payment-form";
+import { useState } from "react";
+import {
+  useStripe,
+  useElements,
+  PaymentElement,
+  Elements,
+} from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import { Button } from "@/components/button";
 
-export const CardPayment: React.FC<PaymentComponentProps> = ({
-  order,
-  isCreatingOrder,
-  isPolling,
-  onPaymentSuccess,
-  onPaymentError,
-  paymentError,
-}) => {
-  if (isCreatingOrder) {
-    return <PaymentLoading message="Creating your order..." />;
-  }
+interface CardPaymentProps {
+  stripePublishableKey: string | null;
+  stripeClientSecret: string | null;
+  onSuccess: () => void;
+  onError: (error: string) => void;
+}
 
-  if (isPolling) {
-    return <PaymentLoading message="Processing payment..." />;
-  }
+const StripeForm: React.FC<{
+  onSuccess: () => void;
+  onError: (error: string) => void;
+}> = ({ onSuccess, onError }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  if (order?.payment?.status === "completed") {
-    return <PaymentSuccess message="Payment successful! 🎉" />;
-  }
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-  if (order?.payment?.status === "failed" || paymentError) {
-    return (
-      <PaymentError
-        message={paymentError ?? "Payment failed. Please try again."}
-      />
-    );
-  }
+    if (!stripe || !elements) return;
 
-  if (!order?.payment.preparation?.stripePublishableKey) {
-    return <PaymentLoading message="Setting up payment..." />;
-  }
+    setIsProcessing(true);
+
+    try {
+      const { error: submitError } = await elements.submit();
+      const { error: confirmError } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: window.location.href,
+        },
+        redirect: "if_required",
+      });
+
+      if (submitError || confirmError) {
+        onError(
+          submitError?.message || confirmError?.message || "Payment failed"
+        );
+        return;
+      }
+      onSuccess();
+    } catch (err) {
+      onError(
+        err instanceof Error ? err.message : "An unexpected error occurred"
+      );
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
-    <div className="space-y-4">
-      <StripePaymentForm
-        stripeClientSecret={order.payment.preparation?.stripeClientSecret ?? ""}
-        stripePublishableKey={
-          order.payment.preparation?.stripePublishableKey ?? ""
-        }
-        onPaymentSuccess={onPaymentSuccess}
-        onPaymentError={onPaymentError}
-      />
-    </div>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <PaymentElement className="w-full" />
+      <Button
+        type="submit"
+        disabled={!stripe || isProcessing}
+        className="w-full"
+      >
+        {isProcessing ? "PROCESSING..." : "PAY"}
+      </Button>
+    </form>
+  );
+};
+
+export const CardPayment: React.FC<CardPaymentProps> = ({
+  stripePublishableKey,
+  stripeClientSecret,
+  onSuccess,
+  onError,
+}) => {
+  if (!stripePublishableKey || !stripeClientSecret) {
+    return null;
+  }
+
+  const stripePromise = loadStripe(stripePublishableKey);
+
+  return (
+    <Elements
+      key={`${stripeClientSecret}-${stripePublishableKey}`}
+      stripe={stripePromise}
+      options={{
+        clientSecret: stripeClientSecret,
+        appearance: {
+          variables: {
+            colorPrimary: "#3b82f6",
+            colorBackground: "#374151",
+            colorText: "#ffffff",
+            colorDanger: "#ef4444",
+          },
+          rules: {
+            ".Label": {
+              color: "#fff",
+              fontSize: "0px",
+              padding: "0px",
+              margin: "0px",
+            },
+            ".Tab": {
+              border: "none",
+            },
+            ".Input": {
+              border: "none",
+            },
+          },
+        },
+      }}
+    >
+      <StripeForm onSuccess={onSuccess} onError={onError} />
+    </Elements>
   );
 };
