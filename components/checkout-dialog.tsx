@@ -94,7 +94,8 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       // handle crypto payment method update
       if (
         selectedPaymentMethod === "crypto" &&
-        order.payment.method !== "base-sepolia"
+        order?.payment?.preparation?.payerAddress?.toLowerCase() !==
+          walletAddress?.toLowerCase()
       ) {
         const result = await updateOrder(order.orderId, clientSecret, {
           recipient: { walletAddress },
@@ -149,18 +150,6 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     }
     if (order.payment?.status === "crypto-payer-insufficient-funds") {
       return { status: "error", message: "Insufficient funds." };
-    }
-    if (
-      selectedPaymentMethod === "card" &&
-      !order.payment.preparation?.stripePublishableKey
-    ) {
-      return { status: "loading", message: "Setting up payment..." };
-    }
-    if (
-      selectedPaymentMethod === "crypto" &&
-      !order.payment.preparation?.serializedTransaction
-    ) {
-      return { status: "loading", message: "Setting up payment..." };
     }
     return null;
   };
