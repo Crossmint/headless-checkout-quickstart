@@ -43,7 +43,13 @@ export const CryptoPayment: React.FC<CryptoPaymentProps> = ({
 
   return (
     <div className="flex flex-col items-center justify-center h-full gap-6">
-      <ConnectButton />
+      <ConnectButton
+        showBalance={false}
+        accountStatus={{
+          smallScreen: "address",
+          largeScreen: "address",
+        }}
+      />
       {walletAddress && chainId === baseSepolia.id && (
         <Button
           disabled={isPending}
