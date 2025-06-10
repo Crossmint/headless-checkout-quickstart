@@ -2,7 +2,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { clsx } from "clsx";
 import type { Weapon } from "../types/weapon";
-import type { Order, OrderInput } from "@/types/checkout";
+import type { Order } from "@/types/checkout";
 import { collectionId, createOrder, updateOrder, getOrder } from "@/lib/api";
 import { CardPayment } from "./card-payment";
 import { CryptoPayment } from "./crypto-payment";
@@ -34,7 +34,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     if (!isOpen) return;
 
     const initializeOrder = async () => {
-      const orderInput: OrderInput = {
+      const result = await createOrder({
         recipient: { email: "buyer@crossmint.com" },
         payment: {
           method: "stripe-payment-element",
@@ -48,9 +48,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
             },
           },
         ],
-      };
-
-      const result = await createOrder(orderInput);
+      });
 
       if (result.success && result.order) {
         setOrder(result.order.order);
@@ -88,7 +86,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       if (
         selectedPaymentMethod === "crypto" &&
         order.payment.method !== "base-sepolia" &&
-        walletAddress
+        order?.recipient?.walletAddress !== walletAddress
       ) {
         const result = await updateOrder(order.orderId, clientSecret, {
           recipient: { walletAddress },

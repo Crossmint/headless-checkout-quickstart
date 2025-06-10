@@ -1,4 +1,4 @@
-import type { CreateOrderResponse, Order, OrderInput } from "@/types/checkout";
+import type { CreateOrderResponse, Order } from "@/types/checkout";
 import type { Weapon } from "@/types/weapon";
 
 export const apiKey = process.env.NEXT_PUBLIC_CROSSMINT_API_KEY ?? "";
@@ -38,7 +38,7 @@ const crossmintBaseUrl = apiKey.includes("staging")
   ? "https://staging.crossmint.com/api/2022-06-09"
   : "https://www.crossmint.com/api/2022-06-09";
 
-export const createOrder = async (orderInput: OrderInput) => {
+export const createOrder = async (orderInput: Partial<Order>) => {
   try {
     const response = await fetch(`${crossmintBaseUrl}/orders`, {
       method: "POST",
@@ -72,7 +72,7 @@ export const createOrder = async (orderInput: OrderInput) => {
 export const updateOrder = async (
   orderId: string,
   clientSecret: string,
-  orderInput: Partial<OrderInput>
+  orderInput: Partial<Order>
 ) => {
   try {
     const response = await fetch(`${crossmintBaseUrl}/orders/${orderId}`, {

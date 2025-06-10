@@ -1,30 +1,21 @@
 export type Order = {
   orderId: string;
   phase: string;
+  recipient?: {
+    email?: string;
+    walletAddress?: string;
+  };
   payment: {
-    status: string;
+    status?: string;
     method: string;
     currency: string;
-    preparation: {
+    payerAddress?: string;
+    preparation?: {
       stripePublishableKey?: string;
       stripeClientSecret?: string;
       serializedTransaction?: string;
       payerAddress?: string;
     };
-  };
-  quote: {
-    totalPrice: {
-      amount: string;
-      currency: string;
-    };
-  };
-};
-
-export type OrderInput = {
-  payment: {
-    method: string;
-    currency: string;
-    payerAddress?: string;
   };
   lineItems: {
     collectionLocator: string;
@@ -32,9 +23,11 @@ export type OrderInput = {
       totalPrice: string;
     };
   }[];
-  recipient?: {
-    email?: string;
-    walletAddress?: string;
+  quote: {
+    totalPrice: {
+      amount: string;
+      currency: string;
+    };
   };
 };
 
