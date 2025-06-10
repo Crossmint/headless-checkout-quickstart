@@ -2,11 +2,11 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { clsx } from "clsx";
 import type { Weapon } from "../types/weapon";
-import { useCheckout } from "@/hooks/useCheckout";
-import { collectionId, isValidEmail } from "@/lib/checkout";
+import type { Order, OrderInput } from "@/types/checkout";
+import { collectionId, createOrder, updateOrder, getOrder } from "@/lib/api";
 import { CardPayment } from "./card-payment";
-import { UsdcPayment } from "./usdc-payment";
-import { isAddress } from "viem";
+import { CryptoPayment } from "./crypto-payment";
+import { CheckoutStatus } from "./checkout-status";
 import { useAccount } from "wagmi";
 
 interface CheckoutDialogProps {
@@ -15,7 +15,7 @@ interface CheckoutDialogProps {
   onClose: () => void;
 }
 
-type PaymentMethod = "card" | "usdc";
+type PaymentMethod = "card" | "crypto";
 
 export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   selectedWeapon,
@@ -24,95 +24,147 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethod>("card");
-  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [order, setOrder] = useState<Order | null>(null);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
   const { address: walletAddress } = useAccount();
 
-  const {
-    createOrder,
-    isCreatingOrder,
-    order,
-    isPolling,
-    startPollingForPayment,
-    stopPolling,
-    updateOrder,
-  } = useCheckout();
-
+  // create order when dialog opens
   useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-    // create order on mount
-    createOrder({
-      recipient: { email: "buyer@crossmint.com" },
-      payment: {
-        method: "stripe-payment-element",
-        currency: "usd",
-      },
-      lineItems: [
-        {
-          collectionLocator: `crossmint:${collectionId}`,
-          callData: {
-            totalPrice: selectedWeapon.price,
-          },
-        },
-      ],
-    });
-  }, [isOpen, selectedWeapon.price, createOrder]);
+    if (!isOpen) return;
 
-  const handlePaymentSuccess = () => {
-    setPaymentError(null);
-    startPollingForPayment();
-  };
-
-  const handlePaymentError = (error: string) => {
-    setPaymentError(error);
-    stopPolling();
-  };
-
-  useEffect(() => {
-    if (!order) {
-      return;
-    }
-
-    if (
-      selectedPaymentMethod === "card" &&
-      order.payment.method !== "stripe-payment-element"
-    ) {
-      updateOrder({
+    const initializeOrder = async () => {
+      const orderInput: OrderInput = {
         recipient: { email: "buyer@crossmint.com" },
         payment: {
           method: "stripe-payment-element",
           currency: "usd",
         },
-      });
-      return;
-    }
+        lineItems: [
+          {
+            collectionLocator: `crossmint:${collectionId}`,
+            callData: {
+              totalPrice: selectedWeapon.price,
+            },
+          },
+        ],
+      };
 
-    if (
-      selectedPaymentMethod === "usdc" &&
-      order.payment.method !== "base-sepolia" &&
-      order.payment.preparation.payerAddress !== walletAddress
-    ) {
-      updateOrder({
-        recipient: {
-          walletAddress,
-        },
-        payment: {
-          method: "base-sepolia",
-          currency: "usdc",
-          payerAddress: walletAddress,
-        },
-      });
-    }
-  }, [selectedPaymentMethod, order, updateOrder, walletAddress]);
+      const result = await createOrder(orderInput);
 
-  useEffect(() => {
-    return () => {
-      stopPolling();
+      if (result.success && result.order) {
+        setOrder(result.order.order);
+        setClientSecret(result.order.clientSecret);
+      }
     };
-  }, [stopPolling]);
+
+    initializeOrder();
+  }, [isOpen, selectedWeapon.price]);
+
+  // update order when payment method changes
+  useEffect(() => {
+    if (!order || !clientSecret) return;
+
+    const updatePaymentMethod = async () => {
+      // handle card payment method update
+      if (
+        selectedPaymentMethod === "card" &&
+        order.payment.method !== "stripe-payment-element"
+      ) {
+        const result = await updateOrder(order.orderId, clientSecret, {
+          recipient: { email: "buyer@crossmint.com" },
+          payment: {
+            method: "stripe-payment-element",
+            currency: "usd",
+          },
+        });
+        if (result.success && result.order) {
+          setOrder(result.order);
+        }
+        return;
+      }
+
+      // handle crypto payment method update
+      if (
+        selectedPaymentMethod === "crypto" &&
+        order.payment.method !== "base-sepolia" &&
+        walletAddress
+      ) {
+        const result = await updateOrder(order.orderId, clientSecret, {
+          recipient: { walletAddress },
+          payment: {
+            method: "base-sepolia",
+            currency: "usdc",
+            payerAddress: walletAddress,
+          },
+        });
+        if (result.success && result.order) {
+          setOrder(result.order);
+        }
+        return;
+      }
+    };
+
+    updatePaymentMethod();
+  }, [selectedPaymentMethod, order, clientSecret, walletAddress]);
+
+  // poll for payment status
+  useEffect(() => {
+    if (!isPolling || !order || !clientSecret) return;
+
+    const pollInterval = setInterval(async () => {
+      const result = await getOrder(order.orderId, clientSecret);
+      if (result.success && result.order) {
+        setOrder(result.order);
+
+        // stop polling when payment is completed or failed
+        if (
+          (result.order.payment.status === "completed" &&
+            result.order.phase === "completed") ||
+          result.order.payment.status === "failed"
+        ) {
+          setIsPolling(false);
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(pollInterval);
+  }, [isPolling, order, clientSecret]);
+
+  const getCheckoutStatus = () => {
+    if (!order) {
+      return { status: "loading" as const, message: "Creating your order..." };
+    }
+    if (isPolling && order.phase === "delivery") {
+      return { status: "loading" as const, message: "Delivering your item..." };
+    }
+    if (isPolling) {
+      return { status: "loading" as const, message: "Processing payment..." };
+    }
+    if (order.payment?.status === "completed") {
+      return { status: "success" as const, message: "Payment successful! 🎉" };
+    }
+    if (order.payment?.status === "failed") {
+      return {
+        status: "error" as const,
+        message: "Payment failed. Please try again.",
+      };
+    }
+    if (
+      selectedPaymentMethod === "card" &&
+      !order.payment.preparation?.stripePublishableKey
+    ) {
+      return { status: "loading" as const, message: "Setting up payment..." };
+    }
+    if (order.payment?.status === "crypto-payer-insufficient-funds") {
+      return { status: "error" as const, message: "Insufficient funds." };
+    }
+    return null;
+  };
 
   if (!isOpen) return null;
+
+  const checkoutStatus = getCheckoutStatus();
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -182,10 +234,10 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
           <button
             type="button"
-            onClick={() => setSelectedPaymentMethod("usdc")}
+            onClick={() => setSelectedPaymentMethod("crypto")}
             className={clsx(
               "p-6 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-3",
-              selectedPaymentMethod === "usdc"
+              selectedPaymentMethod === "crypto"
                 ? "border-blue-400 bg-blue-500/20"
                 : "border-gray-600 bg-gray-700/30 hover:border-gray-500"
             )}
@@ -204,29 +256,41 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
                 />
               </svg>
             </div>
-            <span className="text-white font-medium">Pay with USDC</span>
+            <span className="text-white font-medium">Pay with Crypto</span>
           </button>
         </div>
 
         {/* Payment method content area */}
         <div className="min-h-[200px] bg-gray-700/20 rounded-xl p-6">
-          {selectedPaymentMethod === "card" ? (
+          {checkoutStatus ? (
+            <CheckoutStatus
+              status={checkoutStatus.status}
+              message={checkoutStatus.message}
+            />
+          ) : selectedPaymentMethod === "card" ? (
             <CardPayment
-              order={order}
-              isCreatingOrder={isCreatingOrder}
-              isPolling={isPolling}
-              onPaymentSuccess={handlePaymentSuccess}
-              onPaymentError={handlePaymentError}
-              paymentError={paymentError}
+              stripePublishableKey={
+                order?.payment.preparation?.stripePublishableKey || null
+              }
+              stripeClientSecret={
+                order?.payment.preparation?.stripeClientSecret || null
+              }
+              onSuccess={() => setIsPolling(true)}
+              onError={(error) => {
+                console.error("Card payment error:", error);
+                setIsPolling(false);
+              }}
             />
           ) : (
-            <UsdcPayment
-              order={order}
-              isCreatingOrder={isCreatingOrder}
-              isPolling={isPolling}
-              onPaymentSuccess={handlePaymentSuccess}
-              onPaymentError={handlePaymentError}
-              paymentError={paymentError}
+            <CryptoPayment
+              serializedTransaction={
+                order?.payment.preparation?.serializedTransaction || null
+              }
+              onSuccess={() => setIsPolling(true)}
+              onError={(error) => {
+                console.error("Crypto payment error:", error);
+                setIsPolling(false);
+              }}
             />
           )}
         </div>

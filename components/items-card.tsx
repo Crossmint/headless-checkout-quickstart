@@ -1,12 +1,18 @@
 import Image from "next/image";
 import { clsx } from "clsx";
-import type { WeaponCardProps } from "../types/weapon";
+import { WEAPONS } from "@/lib/api";
+import type { Weapon } from "../types/weapon";
 
-export const WeaponCard: React.FC<WeaponCardProps> = ({
-  weapon,
-  isSelected,
-  onClick,
-}) => {
+interface ItemsCardProps {
+  selectedItemId: string;
+  onItemSelect: (itemId: string) => void;
+}
+
+const ItemCard: React.FC<{
+  item: Weapon;
+  isSelected: boolean;
+  onClick: () => void;
+}> = ({ item, isSelected, onClick }) => {
   return (
     <button
       type="button"
@@ -33,24 +39,42 @@ export const WeaponCard: React.FC<WeaponCardProps> = ({
         </div>
       )}
 
-      {/* Weapon icon */}
+      {/* Item icon */}
       <div className="flex items-center justify-center mb-3 flex-1">
         <Image
-          src={weapon.icon}
-          alt={weapon.name}
+          src={item.icon}
+          alt={item.name}
           width={40}
           height={40}
           className="w-10 h-10 object-contain"
         />
       </div>
 
-      {/* Weapon name */}
+      {/* Item name */}
       <h3 className="text-white font-semibold text-sm text-center mb-1">
-        {weapon.name}
+        {item.name}
       </h3>
 
-      {/* Weapon price */}
-      <p className="text-yellow-400 font-bold text-base">{weapon.price}</p>
+      {/* Item price */}
+      <p className="text-yellow-400 font-bold text-base">{item.price}</p>
     </button>
+  );
+};
+
+export const ItemsCard: React.FC<ItemsCardProps> = ({
+  selectedItemId,
+  onItemSelect,
+}) => {
+  return (
+    <div className="grid grid-cols-3 gap-3 mb-8 max-w-md mx-auto">
+      {WEAPONS.map((item) => (
+        <ItemCard
+          key={item.id}
+          item={item}
+          isSelected={selectedItemId === item.id}
+          onClick={() => onItemSelect(item.id)}
+        />
+      ))}
+    </div>
   );
 };

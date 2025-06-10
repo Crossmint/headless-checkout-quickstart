@@ -3,19 +3,13 @@
 import Image from "next/image";
 import { useState } from "react";
 import { Button } from "../components/button";
-import { WeaponSelection } from "../components/weapon-selection";
+import { ItemsCard } from "../components/items-card";
 import { CheckoutDialog } from "../components/checkout-dialog";
-import { WEAPONS } from "@/lib/checkout";
+import { WEAPONS } from "@/lib/api";
 
 export default function Home() {
   const [selectedWeapon, setSelectedWeapon] = useState("gods-sword");
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-
-  const handlePayClick = () => {
-    console.log("Payment button clicked!");
-    console.log("Selected weapon:", selectedWeapon);
-    setIsCheckoutOpen(true);
-  };
 
   const selectedWeaponData =
     WEAPONS.find((weapon) => weapon.id === selectedWeapon) || WEAPONS[0];
@@ -33,13 +27,13 @@ export default function Home() {
                 Select from the finest collection of expertly crafted items!
               </p>
 
-              <WeaponSelection
-                selectedWeaponId={selectedWeapon}
-                onWeaponSelect={setSelectedWeapon}
+              <ItemsCard
+                selectedItemId={selectedWeapon}
+                onItemSelect={setSelectedWeapon}
               />
 
               <div className="flex flex-col gap-4 w-full max-w-xs">
-                <Button onClick={handlePayClick} size="lg">
+                <Button onClick={() => setIsCheckoutOpen(true)}>
                   PURCHASE
                 </Button>
               </div>
