@@ -4,6 +4,7 @@ import type { Hex } from "viem";
 import { parseTransaction } from "viem";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { baseSepolia } from "viem/chains";
+import Link from "next/link";
 
 interface CryptoPaymentProps {
   serializedTransaction: string | null;
@@ -42,16 +43,31 @@ export const CryptoPayment: React.FC<CryptoPaymentProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-6">
-      <ConnectButton />
+    <div className="flex flex-col items-center justify-center h-full gap-6 w-full">
+      <ConnectButton
+        showBalance={false}
+        accountStatus={{
+          smallScreen: "address",
+          largeScreen: "address",
+        }}
+      />
       {walletAddress && chainId === baseSepolia.id && (
-        <Button
-          disabled={isPending}
-          onClick={signAndSendTransaction}
-          className="w-full"
-        >
-          {isPending ? "PROCESSING..." : "PAY"}
-        </Button>
+        <>
+          <Link
+            href={"https://faucet.circle.com/"}
+            target="_blank"
+            className="text-white underline"
+          >
+            Get Test USDC
+          </Link>
+          <Button
+            disabled={isPending}
+            onClick={signAndSendTransaction}
+            className="w-full"
+          >
+            {isPending ? "PROCESSING..." : "PAY"}
+          </Button>
+        </>
       )}
     </div>
   );

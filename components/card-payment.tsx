@@ -90,24 +90,10 @@ export const CardPayment: React.FC<CardPaymentProps> = ({
         clientSecret: stripeClientSecret,
         appearance: {
           variables: {
-            colorPrimary: "#3b82f6",
-            colorBackground: "#374151",
-            colorText: "#ffffff",
-            colorDanger: "#ef4444",
-          },
-          rules: {
-            ".Label": {
-              color: "#fff",
-              fontSize: "0px",
-              padding: "0px",
-              margin: "0px",
-            },
-            ".Tab": {
-              border: "none",
-            },
-            ".Input": {
-              border: "none",
-            },
+            colorPrimary: "#FFFFFF",
+            colorBackground: "#8989A3B2",
+            colorText: "#FFFFFF",
+            colorDanger: "#EF4444",
           },
         },
       }}
