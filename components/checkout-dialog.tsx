@@ -253,7 +253,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         </div>
 
         {/* Payment method content area */}
-        <div className="min-h-[200px] bg-gray-700/20 rounded-xl p-6">
+        <div className="min-h-[200px] w-full">
           {checkoutStatus && checkoutStatus?.status !== "error" ? (
             <CheckoutStatus
               status={checkoutStatus?.status}
