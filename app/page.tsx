@@ -19,7 +19,7 @@ export default function Home() {
                 CHOOSE YOUR WEAPON
               </h1>
               <p className="text-white/80 text-center mb-6">
-                Select from the finest collection of expertly crafted items!
+                Select from the finest collection of expertly crafted items! Lol
               </p>
 
               <Image src="/items.svg" alt="Items" width={405} height={162} />
