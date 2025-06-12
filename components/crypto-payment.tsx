@@ -5,6 +5,7 @@ import { parseTransaction } from "viem";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { baseSepolia } from "viem/chains";
 import Link from "next/link";
+import { TabHelper } from "@/components/tab-helper";
 
 interface CryptoPaymentProps {
   serializedTransaction: string | null;
@@ -53,13 +54,31 @@ export const CryptoPayment: React.FC<CryptoPaymentProps> = ({
       />
       {walletAddress && chainId === baseSepolia.id && (
         <>
-          <Link
-            href={"https://faucet.circle.com/"}
-            target="_blank"
-            className="text-white underline"
-          >
-            Get Test USDC
-          </Link>
+          <TabHelper title="Testing instructions">
+            <ul className="list-disc pl-4">
+              <li>
+                <Link
+                  href="https://faucet.circle.com/"
+                  target="_blank"
+                  className="text-white underline"
+                >
+                  Get test USDC
+                </Link>{" "}
+                to proceed with the transaction
+              </li>
+              <li>
+                <Link
+                  href="https://faucet.quicknode.com/base/sepolia"
+                  target="_blank"
+                  className="text-white underline"
+                >
+                  Get test ETH
+                </Link>{" "}
+                to pay for the gas fees
+              </li>
+            </ul>
+          </TabHelper>
+
           <Button
             disabled={isPending}
             onClick={signAndSendTransaction}
