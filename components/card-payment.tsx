@@ -7,6 +7,7 @@ import {
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { Button } from "@/components/button";
+import { TabHelper } from "@/components/tab-helper";
 
 interface CardPaymentProps {
   stripePublishableKey: string | null;
@@ -58,6 +59,15 @@ const StripeForm: React.FC<{
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <TabHelper title="TEST CARD">
+        <input
+          type="text"
+          value="4242 4242 4242 4242"
+          disabled
+          readOnly
+          className="w-full"
+        />
+      </TabHelper>
       <PaymentElement className="w-full" />
       <Button
         type="submit"
