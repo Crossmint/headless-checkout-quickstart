@@ -157,7 +157,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white/10 rounded-2xl p-8 max-w-lg w-full relative backdrop-blur-lg border border-white/20">
+      <div className="rounded-2xl p-8 max-w-lg w-full relative bg-[#606089E5] border border-white/20">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -197,7 +197,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
             type="button"
             onClick={() => setSelectedPaymentMethod("card")}
             className={clsx(
-              "p-4 rounded-xl border transition-all duration-200 flex items-center gap-3",
+              "p-4 rounded-xl border transition-all duration-200 flex flex-col sm:flex-row items-center gap-3",
               selectedPaymentMethod === "card"
                 ? "border-blue-400 bg-blue-500/20"
                 : "border-gray-600 bg-gray-700/30 hover:border-gray-500"
@@ -218,7 +218,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
                 />
               </svg>
             </div>
-            <div className="flex flex-col items-start">
+            <div className="flex flex-col items-center sm:items-start">
               <span className="text-white text-md font-bold">
                 Pay With Card
               </span>
@@ -229,7 +229,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
             type="button"
             onClick={() => setSelectedPaymentMethod("crypto")}
             className={clsx(
-              "p-4 rounded-xl border transition-all duration-200 flex items-center gap-3",
+              "p-4 rounded-xl border transition-all duration-200 flex flex-col sm:flex-row items-center gap-3",
               selectedPaymentMethod === "crypto"
                 ? "border-blue-400 bg-blue-500/20"
                 : "border-gray-600 bg-gray-700/30 hover:border-gray-500"
@@ -249,7 +249,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
                 />
               </svg>
             </div>
-            <div className="flex flex-col items-start">
+            <div className="flex flex-col items-center sm:items-start">
               <span className="text-white text-md font-bold">
                 Pay with USDC
               </span>
