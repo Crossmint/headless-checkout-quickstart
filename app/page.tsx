@@ -2,17 +2,12 @@
 
 import { useState } from "react";
 import { Button } from "../components/button";
-import { ItemsCard } from "../components/items-card";
 import { CheckoutDialog } from "../components/checkout-dialog";
-import { WEAPONS } from "@/lib/api";
 import { Footer } from "@/components/footer";
+import Image from "next/image";
 
 export default function Home() {
-  const [selectedWeapon, setSelectedWeapon] = useState("gods-sword");
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-
-  const selectedWeaponData =
-    WEAPONS.find((weapon) => weapon.id === selectedWeapon) || WEAPONS[0];
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
@@ -27,10 +22,7 @@ export default function Home() {
                 Select from the finest collection of expertly crafted items!
               </p>
 
-              <ItemsCard
-                selectedItemId={selectedWeapon}
-                onItemSelect={setSelectedWeapon}
-              />
+              <Image src="/items.svg" alt="Items" width={405} height={162} />
 
               <div className="flex flex-col gap-4 w-full max-w-xs">
                 <Button onClick={() => setIsCheckoutOpen(true)}>
@@ -42,7 +34,6 @@ export default function Home() {
         </div>
       </main>
       <CheckoutDialog
-        selectedWeapon={selectedWeaponData}
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
       />

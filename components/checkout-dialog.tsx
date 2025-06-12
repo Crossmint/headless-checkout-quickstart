@@ -1,8 +1,7 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { clsx } from "clsx";
-import type { Weapon } from "../types/weapon";
-import type { Order } from "@/types/checkout";
+import type { Order } from "@/types/api";
 import { collectionId, createOrder, updateOrder, pollOrder } from "@/lib/api";
 import { CardPayment } from "./card-payment";
 import { CryptoPayment } from "./crypto-payment";
@@ -10,7 +9,6 @@ import { CheckoutStatus } from "./checkout-status";
 import { useAccount } from "wagmi";
 
 interface CheckoutDialogProps {
-  selectedWeapon: Weapon;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -20,7 +18,6 @@ type PaymentMethod = "card" | "crypto";
 const emailAddress = "buyer@crossmint.com";
 
 export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
-  selectedWeapon,
   isOpen,
   onClose,
 }) => {
@@ -46,7 +43,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
           {
             collectionLocator: `crossmint:${collectionId}`,
             callData: {
-              totalPrice: selectedWeapon.price,
+              totalPrice: "0.53",
             },
           },
         ],
@@ -66,7 +63,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       setClientSecret(null);
       setIsPolling(false);
     };
-  }, [isOpen, selectedWeapon.price]);
+  }, [isOpen]);
 
   // update order when payment method changes
   useEffect(() => {
@@ -179,14 +176,14 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         <div className="flex items-center justify-between mb-8">
           <div>
             <h3 className="text-white text-xl font-semibold mb-1">
-              {selectedWeapon.name}
+              God&apos;s Sword
             </h3>
             <p className="text-white/60">Weapon</p>
           </div>
           <div className="bg-gray-700/50 rounded-lg p-3">
             <Image
-              src={selectedWeapon.icon}
-              alt={selectedWeapon.name}
+              src="/sword.svg"
+              alt="Sword"
               width={48}
               height={48}
               className="w-12 h-12 object-contain"
@@ -222,7 +219,9 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               </svg>
             </div>
             <div className="flex flex-col items-start">
-              <span className="text-white text-md font-bold">Pay With Card</span>
+              <span className="text-white text-md font-bold">
+                Pay With Card
+              </span>
             </div>
           </button>
 
@@ -251,7 +250,9 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               </svg>
             </div>
             <div className="flex flex-col items-start">
-              <span className="text-white text-md font-bold">Pay with USDC</span>
+              <span className="text-white text-md font-bold">
+                Pay with USDC
+              </span>
             </div>
           </button>
         </div>

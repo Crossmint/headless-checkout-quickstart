@@ -1,5 +1,4 @@
-import type { CreateOrderResponse, Order } from "@/types/checkout";
-import type { Weapon } from "@/types/weapon";
+import type { CreateOrderResponse, Order } from "@/types/api";
 
 export const apiKey = process.env.NEXT_PUBLIC_CROSSMINT_API_KEY ?? "";
 export const collectionId =
@@ -12,27 +11,6 @@ if (!apiKey) {
 if (!collectionId) {
   throw new Error("NEXT_PUBLIC_CROSSMINT_COLLECTION_ID is not set");
 }
-
-export const WEAPONS: Weapon[] = [
-  {
-    id: "gods-sword",
-    name: "God's sword",
-    price: "0.53",
-    icon: "/sword.svg",
-  },
-  {
-    id: "elves-axe-silver",
-    name: "Elves axe - Silver",
-    price: "0.53",
-    icon: "/axe.svg",
-  },
-  {
-    id: "magic-potion",
-    name: "Magic potion",
-    price: "0.53",
-    icon: "/elixir.svg",
-  },
-];
 
 const crossmintBaseUrl = apiKey.includes("staging")
   ? "https://staging.crossmint.com/api/2022-06-09"
