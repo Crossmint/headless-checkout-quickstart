@@ -1,13 +1,12 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { clsx } from "clsx";
 import type { Order } from "@/types/api";
 import { collectionId, createOrder, updateOrder, pollOrder } from "@/lib/api";
 import { CardPayment } from "./card-payment";
 import { CryptoPayment } from "./crypto-payment";
 import { CheckoutStatus } from "./checkout-status";
 import { useAccount } from "wagmi";
-import { PaymentMethodButton } from "./PaymentMethodButton";
+import { PaymentMethodButton } from "./payment-method-button";
 
 interface CheckoutDialogProps {
   isOpen: boolean;
@@ -189,8 +188,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
         {/* Payment method tabs */}
         <div className="grid grid-cols-2 gap-4">
-
-         {/* Select credit card as payment method */}
+          {/* Select credit card as payment method */}
           <PaymentMethodButton
             selected={selectedPaymentMethod === "card"}
             onClick={() => setSelectedPaymentMethod("card")}
@@ -211,7 +209,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
             }
             label="Pay With Card"
           />
-         {/* Select USDC as payment method */}
+          {/* Select USDC as payment method */}
           <PaymentMethodButton
             selected={selectedPaymentMethod === "crypto"}
             onClick={() => setSelectedPaymentMethod("crypto")}
