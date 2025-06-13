@@ -7,6 +7,7 @@ import { CardPayment } from "./card-payment";
 import { CryptoPayment } from "./crypto-payment";
 import { CheckoutStatus } from "./checkout-status";
 import { useAccount } from "wagmi";
+import { PaymentMethodButton } from "./PaymentMethodButton";
 
 interface CheckoutDialogProps {
   isOpen: boolean;
@@ -28,7 +29,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   const [isPolling, setIsPolling] = useState(false);
   const { address: walletAddress } = useAccount();
 
-  // create order when dialog opens
+  // Create order ID when dialog opens and set credit card payment method as default
   useEffect(() => {
     if (!isOpen) return;
 
@@ -65,12 +66,12 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     };
   }, [isOpen]);
 
-  // update order when payment method changes
+  // Update order when payment method changes
   useEffect(() => {
     if (!order || !clientSecret) return;
 
     const updatePaymentMethod = async () => {
-      // handle card payment method update
+      // Handle card payment method update
       if (
         selectedPaymentMethod === "card" &&
         order.payment.method !== "stripe-payment-element"
@@ -88,7 +89,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         return;
       }
 
-      // handle crypto payment method update
+      // Handle crypto payment method update
       if (
         selectedPaymentMethod === "crypto" &&
         order?.payment?.preparation?.payerAddress?.toLowerCase() !==
@@ -157,30 +158,25 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="rounded-2xl p-8 max-w-lg w-full relative bg-[#606089E5] border border-white/20">
+      <div className="modal max-h-[calc(100vh-32px)] max-w-lg w-full flex flex-col justify-between">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-white/60 hover:text-white text-2xl"
+          className="absolute top-4 right-4 text-primary/60 hover:text-primary text-2xl"
           type="button"
         >
           ×
         </button>
 
-        {/* Dialog title */}
-        <h2 className="text-3xl text-white font-bold mb-8 font-['BreatheFireIII']">
-          ORDER SUMMARY
-        </h2>
-
         {/* Selected weapon info */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-white text-xl font-semibold mb-1">
-              God&apos;s Sword
+            <h3 className="text-primary text-xl font-semibold">
+              Order Summary
             </h3>
-            <p className="text-white/60">Weapon</p>
+            <p className="text-primary/60">God Sword</p>
           </div>
-          <div className="bg-gray-700/50 rounded-lg p-3">
+          <div className="bg-accent-foreground rounded-lg p-3">
             <Image
               src="/sword.svg"
               alt="Sword"
@@ -192,20 +188,15 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         </div>
 
         {/* Payment method tabs */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <button
-            type="button"
+        <div className="grid grid-cols-2 gap-4">
+
+         {/* Select credit card as payment method */}
+          <PaymentMethodButton
+            selected={selectedPaymentMethod === "card"}
             onClick={() => setSelectedPaymentMethod("card")}
-            className={clsx(
-              "p-4 rounded-xl border transition-all duration-200 flex flex-col sm:flex-row items-center gap-3",
-              selectedPaymentMethod === "card"
-                ? "border-blue-400 bg-blue-500/20"
-                : "border-gray-600 bg-gray-700/30 hover:border-gray-500"
-            )}
-          >
-            <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
+            icon={
               <svg
-                className="w-6 h-6 text-white"
+                className="w-8 h-8 text-primary"
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 aria-hidden="true"
@@ -217,27 +208,16 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
                   clipRule="evenodd"
                 />
               </svg>
-            </div>
-            <div className="flex flex-col items-center sm:items-start">
-              <span className="text-white text-md font-bold">
-                Pay With Card
-              </span>
-            </div>
-          </button>
-
-          <button
-            type="button"
+            }
+            label="Pay With Card"
+          />
+         {/* Select USDC as payment method */}
+          <PaymentMethodButton
+            selected={selectedPaymentMethod === "crypto"}
             onClick={() => setSelectedPaymentMethod("crypto")}
-            className={clsx(
-              "p-4 rounded-xl border transition-all duration-200 flex flex-col sm:flex-row items-center gap-3",
-              selectedPaymentMethod === "crypto"
-                ? "border-blue-400 bg-blue-500/20"
-                : "border-gray-600 bg-gray-700/30 hover:border-gray-500"
-            )}
-          >
-            <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
+            icon={
               <svg
-                className="w-6 h-6 text-white"
+                className="w-8 h-8 text-primary"
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 aria-hidden="true"
@@ -248,17 +228,13 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
                   clipRule="evenodd"
                 />
               </svg>
-            </div>
-            <div className="flex flex-col items-center sm:items-start">
-              <span className="text-white text-md font-bold">
-                Pay with USDC
-              </span>
-            </div>
-          </button>
+            }
+            label="Pay with USDC"
+          />
         </div>
 
         {/* Payment method content area */}
-        <div className="min-h-[200px] w-full">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden pr-4 -mr-4 scrollbar-stable">
           {checkoutStatus && checkoutStatus?.status !== "error" ? (
             <CheckoutStatus
               status={checkoutStatus?.status}

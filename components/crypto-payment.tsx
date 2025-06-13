@@ -54,6 +54,8 @@ export const CryptoPayment: React.FC<CryptoPaymentProps> = ({
       />
       {walletAddress && chainId === baseSepolia.id && (
         <>
+          
+          {/* Testing instructions */}
           <TabHelper title="Testing instructions">
             <ul className="list-disc pl-4">
               <li>

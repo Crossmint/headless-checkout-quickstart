@@ -23,6 +23,7 @@ const StripeForm: React.FC<{
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
+  const cardColor = getComputedStyle(document.documentElement).getPropertyValue('--card').trim();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
