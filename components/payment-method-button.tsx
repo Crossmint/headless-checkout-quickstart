@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { clsx } from "clsx";
 
 interface PaymentMethodButtonProps {
@@ -36,4 +36,4 @@ export const PaymentMethodButton: React.FC<PaymentMethodButtonProps> = ({
       </div>
     </button>
   );
-}; 
+};
