@@ -22,8 +22,8 @@ export const Button: React.FC<ButtonProps> = ({
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        "relative text-black rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100",
-        "bg-button-bg shadow-lg hover:shadow-xl hover:opacity-80",
+        "relative text-secondary rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100",
+        "bg-accent shadow-lg hover:shadow-xl hover:opacity-80",
         "px-8 py-4 text-lg",
         "font-['BreatheFireIII']",
         className

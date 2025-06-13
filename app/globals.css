@@ -9,21 +9,21 @@
 :root {
   --radius: 0.625rem;
   --background: oklch(96.83% 0.0069 247.9);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --foreground: #606089E5;
+  --card: #8989A3B2;
+  --card-foreground: #9DAFF44D;
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --primary: #FFFFFF;
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
+  --secondary: #000000;
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(68.76% 0.1856 150.65);
-  --accent-foreground: oklch(60.29% 0 0);
+  --accent: #C7D3FF;
+  --accent-foreground: #12121233;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
+  --border: #c7d3ff86;
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.646 0.222 41.116);
@@ -40,6 +40,7 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
   --button-bg: #C7D3FF;
+  
 }
 
 @theme inline {
@@ -80,7 +81,16 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-button-bg: var(--button-bg);
 }
-
+.modal {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: 16px;
+  padding: 2rem;
+  background-color: var(--foreground);
+  border: 1px solid var(--border);
+  gap: 1.5rem;
+}
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -93,4 +103,8 @@
   [role="button"]:not([disabled]) {
     cursor: pointer;
   }
+}
+
+.scrollbar-stable {
+  scrollbar-gutter: stable;
 }
