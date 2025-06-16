@@ -5,7 +5,7 @@
 <h1>Headless Checkout Quickstart</h1>
 
 <div align="center">
-<a href="https://headless-checkout.demos-crossmint.com/">Live Demo</a> | <a href="https://docs.crossmint.com/payments/embedded/overview">Docs</a> | <a href="https://github.com/crossmint">See all quickstarts</a>
+<a href="https://headless-checkout.demos-crossmint.com/">Live Demo</a> | <a href="https://docs.crossmint.com/payments/embedded/overview">Docs</a> | <a href="https://www.crossmint.com/quickstarts">See all quickstarts</a>
 </div>
 
 <br>
@@ -19,10 +19,17 @@ Allow your customers to buy NFTs with credit card and crypto payments, using Cro
 
 **Key features:**
 
-- Accept fiat payments via credit, debit card
-- Accept crypto payments
+- Accept fiat payments via credit and debit card
+- Accept USDC payments
 - Deliver NFTs directly to a buyer's wallet or email address
 - Full order management with real-time status updates
+
+### Prerequisites
+
+- Create a developer account in the [Staging Console](https://staging.crossmint.com/signin?callbackUrl=/console).
+- Create a [new collection](https://docs.crossmint.com/payments/guides/create-collection) or [import yours](https://docs.crossmint.com/payments/guides/register-collection) in the console, and have your `collectionId` ready.
+- Make sure your collection has at least one NFT configured.
+- From the detail view of your collection, navigate to the Checkout tab to configure the pricing settings and enable Credit Card and Crypto payments.
 
 ## Deploy
 
@@ -80,15 +87,8 @@ Easily deploy the template to Vercel with the button below. You will need to set
     bun dev
     ```
 
-## Using in production
 
-1. Headless checkout is available on Staging for testing purposes. If you would like to use this on Production, [contact sales](https://www.crossmint.com/contact/sales) to request access.
-2. Create an account in the [Production Console](https://www.crossmint.com/signin?callbackUrl=/console), add your collection and configure the payment settings from the Checkout tab.
-3. Verify your account as the project owner and verify your collection. [Learn more](https://docs.crossmint.com/introduction/platform/account-verification) about verifications.
-4. Update your `.env` file with your production variables.
-5. Deploy your application to a production environment.
-
-## How It Works
+## Usage
 
 This implementation uses Crossmint's **Headless Orders API** to create a completely custom checkout experience. The flow works as follows:
 
@@ -148,13 +148,6 @@ This quickstart uses a **client-side approach** with:
 - No additional API scopes needed for update/get operations when using `clientSecret`
 - For **server-side implementations**, use a server-side API key with `orders.create`, `orders.update`, and `orders.read` scopes
 
-### Prerequisites
-
-- Create a developer account in the [Staging Console](https://staging.crossmint.com/signin?callbackUrl=/console).
-- Create a [new collection](https://docs.crossmint.com/payments/guides/create-collection) or [import yours](https://docs.crossmint.com/payments/guides/register-collection) in the console, and have your `collectionId` ready.
-- Make sure your collection has at least one NFT configured.
-- From the detail view of your collection, navigate to the Checkout tab to configure the pricing settings and enable Credit Card and Crypto payments.
-
 ## Advanced Usage
 
 For advanced usage, refer to the Crossmint documentation:
@@ -162,3 +155,11 @@ For advanced usage, refer to the Crossmint documentation:
 - Add Apple Pay: [https://docs.crossmint.com/payments/embedded/guides/apple-pay](https://docs.crossmint.com/payments/embedded/guides/apple-pay)
 - Customize the UI: [https://docs.crossmint.com/payments/embedded/guides/ui-customization](https://docs.crossmint.com/payments/embedded/guides/ui-customization)
 - Edit payment methods: [https://docs.crossmint.com/payments/embedded/guides/payment-methods](https://docs.crossmint.com/payments/embedded/guides/payment-methods)
+
+## Using in production
+
+1. Headless checkout is available on Staging for testing purposes. If you would like to use this on Production, [contact sales](https://www.crossmint.com/contact/sales) to request access.
+2. Create an account in the [Production Console](https://www.crossmint.com/signin?callbackUrl=/console), add your collection and configure the payment settings from the Checkout tab.
+3. Verify your account as the project owner and verify your collection. [Learn more](https://docs.crossmint.com/introduction/platform/account-verification) about verifications.
+4. Update your `.env` file with your production variables.
+5. Deploy your application to a production environment.

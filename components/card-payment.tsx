@@ -6,8 +6,8 @@ import {
   Elements,
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import { Button } from "@/components/button";
-import { TabHelper } from "@/components/tab-helper";
+import { Button } from "@/components/UI/button";
+import { TabHelper } from "@/components/UI/tab-helper";
 
 interface CardPaymentProps {
   stripePublishableKey: string | null;
