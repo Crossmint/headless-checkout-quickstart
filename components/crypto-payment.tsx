@@ -1,11 +1,11 @@
-import { Button } from "@/components/button";
+import { Button } from "@/components/UI/button";
 import { useAccount, useSendTransaction } from "wagmi";
 import type { Hex } from "viem";
 import { parseTransaction } from "viem";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { baseSepolia } from "viem/chains";
 import Link from "next/link";
-import { TabHelper } from "@/components/tab-helper";
+import { TabHelper } from "@/components/UI/tab-helper";
 
 interface CryptoPaymentProps {
   serializedTransaction: string | null;

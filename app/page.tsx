@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "../components/button";
+import { Button } from "../components/UI/button";
 import { CheckoutDialog } from "../components/checkout-dialog";
-import { Footer } from "@/components/footer";
+import { Footer } from "@/components/UI/footer";
 import Image from "next/image";
 
 export default function Home() {

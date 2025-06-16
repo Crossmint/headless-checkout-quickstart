@@ -6,7 +6,7 @@ import { CardPayment } from "./card-payment";
 import { CryptoPayment } from "./crypto-payment";
 import { CheckoutStatus } from "./checkout-status";
 import { useAccount } from "wagmi";
-import { PaymentMethodButton } from "./payment-method-button";
+import { PaymentMethodButton } from "@/components/UI/payment-method-button";
 
 interface CheckoutDialogProps {
   isOpen: boolean;
