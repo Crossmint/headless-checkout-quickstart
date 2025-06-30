@@ -19,18 +19,18 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Headless Checkout Quickstart",
   description:
-    "Allow your customers to buy NFTs with credit card and crypto payments, using Crossmint's embedded checkout. This quickstart provides a seamless integration for accepting payments in your dApp.",
+    "Allow your customers to buy NFTs with credit card and crypto payments, using Crossmint's headless checkout. This quickstart provides a seamless integration for accepting payments in your dApp.",
   creator: "Crossmint",
   publisher: "Crossmint",
   metadataBase: new URL("https://headless-checkout.demos-crossmint.com"),
   openGraph: {
     title: "Headless Checkout Quickstart",
     description:
-      "Allow your customers to buy NFTs with credit card and crypto payments, using Crossmint's embedded checkout. This quickstart provides a seamless integration for accepting payments in your dApp.",
+      "Allow your customers to buy NFTs with credit card and crypto payments, using Crossmint's headless checkout. This quickstart provides a seamless integration for accepting payments in your dApp.",
     images: [
       {
         url: "https://cdn.prod.website-files.com/653a93effa45d5e5a3b8e1e8/66da361c471683f0df2891cd_preview.png",
-        alt: "Crossmint Embedded Checkout Quickstart",
+        alt: "Crossmint Headless Checkout Quickstart",
       },
     ],
     locale: "en_US",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Headless Checkout Quickstart",
     description:
-      "Allow your customers to buy NFTs with credit card and crypto payments, using Crossmint's embedded checkout. This quickstart provides a seamless integration for accepting payments in your dApp.",
+      "Allow your customers to buy NFTs with credit card and crypto payments, using Crossmint's headless checkout. This quickstart provides a seamless integration for accepting payments in your dApp.",
     images: [
       {
         url: "https://cdn.prod.website-files.com/653a93effa45d5e5a3b8e1e8/66da361c471683f0df2891cd_preview.png",
