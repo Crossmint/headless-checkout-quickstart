@@ -22,6 +22,18 @@ export type Order = {
     callData: {
       totalPrice: string;
     };
+    chain?: string;
+    delivery?: {
+      status?: string;
+      txId?: string;
+      recipient?: {
+        walletAddress?: string;
+      };
+      tokens?: {
+        contractAddress?: string;
+        tokenId?: string;
+      }[];
+    };
   }[];
   quote: {
     totalPrice: {

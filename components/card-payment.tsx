@@ -8,6 +8,8 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 import { Button } from "@/components/UI/button";
 import { TabHelper } from "@/components/UI/tab-helper";
+import { copyToClipboard } from "@/lib/utils";
+import { CheckIcon, CopyIcon } from "@/components/UI/icons";
 
 interface CardPaymentProps {
   stripePublishableKey: string | null;
@@ -16,6 +18,8 @@ interface CardPaymentProps {
   onError: (error: string) => void;
 }
 
+const TEST_CARD_NUMBER = "4242 4242 4242 4242";
+
 const StripeForm: React.FC<{
   onSuccess: () => void;
   onError: (error: string) => void;
@@ -23,6 +27,14 @@ const StripeForm: React.FC<{
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [cardCopied, setCardCopied] = useState(false);
+
+  const handleCopyCard = async () => {
+    if (await copyToClipboard(TEST_CARD_NUMBER.replace(/\s/g, ""))) {
+      setCardCopied(true);
+      setTimeout(() => setCardCopied(false), 2000);
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -60,13 +72,22 @@ const StripeForm: React.FC<{
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <TabHelper title="TEST CARD">
-        <input
-          type="text"
-          value="4242 4242 4242 4242"
-          disabled
-          readOnly
-          className="w-full"
-        />
+        <div className="flex items-center justify-between gap-2">
+          <span>{TEST_CARD_NUMBER}</span>
+          <button
+            type="button"
+            onClick={handleCopyCard}
+            className="p-1 cursor-pointer text-primary/80 hover:text-primary transition-colors"
+            title="Copy test card number"
+            aria-label="Copy test card number"
+          >
+            {cardCopied ? (
+              <CheckIcon className="w-[18px] h-[18px] text-green-400" />
+            ) : (
+              <CopyIcon className="w-[18px] h-[18px]" />
+            )}
+          </button>
+        </div>
       </TabHelper>
       <PaymentElement className="w-full" />
       <Button
