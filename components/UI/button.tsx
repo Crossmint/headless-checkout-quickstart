@@ -1,5 +1,5 @@
 import type React from "react";
-import { clsx } from "clsx";
+import { cn } from "@/lib/utils";
 
 interface ButtonProps {
   children: React.ReactNode;
@@ -21,7 +21,7 @@ export const Button: React.FC<ButtonProps> = ({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={clsx(
+      className={cn(
         "relative text-secondary rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100",
         "bg-accent shadow-lg hover:shadow-xl hover:opacity-80",
         "px-8 py-4 text-lg",

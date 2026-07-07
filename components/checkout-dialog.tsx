@@ -5,6 +5,7 @@ import { collectionId, createOrder, updateOrder, pollOrder } from "@/lib/api";
 import { CardPayment } from "./card-payment";
 import { CryptoPayment } from "./crypto-payment";
 import { CheckoutStatus } from "./checkout-status";
+import { CheckoutSuccess } from "./checkout-success";
 import { useAccount } from "wagmi";
 import { PaymentMethodButton } from "@/components/UI/payment-method-button";
 
@@ -154,6 +155,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   if (!isOpen) return null;
 
   const checkoutStatus = getCheckoutStatus();
+  const isSuccess = checkoutStatus?.status === "success";
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -161,12 +163,20 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-primary/60 hover:text-primary text-2xl"
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full border border-accent/40 bg-accent-foreground text-primary/80 hover:text-primary hover:border-accent transition-colors text-lg leading-none"
           type="button"
+          aria-label="Close checkout"
         >
           ×
         </button>
 
+        {/* Success screen replaces the whole checkout flow */}
+        {isSuccess && order ? (
+          <div className="flex-1 overflow-y-auto overflow-x-hidden pr-4 -mr-4 scrollbar-stable">
+            <CheckoutSuccess order={order} />
+          </div>
+        ) : (
+          <>
         {/* Selected weapon info */}
         <div className="flex items-center justify-between">
           <div>
@@ -279,6 +289,8 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
             </>
           )}
         </div>
+          </>
+        )}
       </div>
     </div>
   );
