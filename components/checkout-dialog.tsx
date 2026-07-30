@@ -46,6 +46,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     walletAddress?: string;
     attempt?: number;
   } | null>(null);
+  const activeRequestIdRef = useRef<string | null>(null);
   const { address: walletAddress } = useAccount();
 
   // Create order ID when dialog opens and set credit card payment method as default
@@ -87,6 +88,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       setPaymentMethodError(null);
       setPaymentMethodSwitchAttempt(0);
       lastUpdateRequestRef.current = null;
+      activeRequestIdRef.current = null;
     };
   }, [isOpen]);
 
@@ -110,12 +112,16 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         !["card", "basis-theory"].includes(order.payment.method) &&
         !alreadyRequestedForAttempt
       ) {
+        const requestId = `card-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2)}`;
         lastUpdateRequestRef.current = {
           orderId: order.orderId,
           method: selectedPaymentMethod,
           walletAddress,
           attempt: paymentMethodSwitchAttempt,
         };
+        activeRequestIdRef.current = requestId;
         setIsUpdatingPaymentMethod(true);
         setPaymentMethodError(null);
         try {
@@ -127,13 +133,19 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               receiptEmail: emailAddress,
             },
           });
+          if (activeRequestIdRef.current !== requestId) {
+            return;
+          }
           if (result.success && result.order) {
             setOrder(result.order);
           } else {
             setPaymentMethodError("Could not switch to card payment.");
           }
         } finally {
-          setIsUpdatingPaymentMethod(false);
+          if (activeRequestIdRef.current === requestId) {
+            setIsUpdatingPaymentMethod(false);
+            activeRequestIdRef.current = null;
+          }
         }
         return;
       }
@@ -145,12 +157,16 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
           walletAddress?.toLowerCase() &&
         !alreadyRequestedForAttempt
       ) {
+        const requestId = `crypto-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2)}`;
         lastUpdateRequestRef.current = {
           orderId: order.orderId,
           method: selectedPaymentMethod,
           walletAddress,
           attempt: paymentMethodSwitchAttempt,
         };
+        activeRequestIdRef.current = requestId;
         setIsUpdatingPaymentMethod(true);
         setPaymentMethodError(null);
         try {
@@ -162,13 +178,19 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               payerAddress: walletAddress,
             },
           });
+          if (activeRequestIdRef.current !== requestId) {
+            return;
+          }
           if (result.success && result.order) {
             setOrder(result.order);
           } else {
             setPaymentMethodError("Could not switch to crypto payment.");
           }
         } finally {
-          setIsUpdatingPaymentMethod(false);
+          if (activeRequestIdRef.current === requestId) {
+            setIsUpdatingPaymentMethod(false);
+            activeRequestIdRef.current = null;
+          }
         }
         return;
       }

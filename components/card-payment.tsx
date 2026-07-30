@@ -28,11 +28,7 @@ function PaymentStatusWatcher({
   const { order } = useCrossmintCheckout();
   const onSuccessRef = useRef(onSuccess);
   const onErrorRef = useRef(onError);
-  const handledRef = useRef<{
-    orderId?: string;
-    status?: string;
-    failureMessage?: string;
-  } | null>(null);
+  const previousOrderRef = useRef(order);
 
   useEffect(() => {
     onSuccessRef.current = onSuccess;
@@ -43,45 +39,29 @@ function PaymentStatusWatcher({
   }, [onError]);
 
   useEffect(() => {
+    const previousOrder = previousOrderRef.current;
+    previousOrderRef.current = order;
+
     if (!order?.orderId) {
-      handledRef.current = null;
       return;
     }
 
-    const orderId = order.orderId;
     const status = order.payment?.status;
+    const previousStatus = previousOrder?.payment?.status;
     const failureReason = order.payment?.failureReason;
-    const isFailed = Boolean(failureReason) || (status as string) === "failed";
+    const previousFailureReason = previousOrder?.payment?.failureReason;
+    const failureMessage =
+      failureReason?.message || failureReason?.code || "Payment failed";
+    const previousFailureMessage =
+      previousFailureReason?.message || previousFailureReason?.code;
 
-    // Reset the terminal-state guard when the order changes or the payment
-    // moves back to a non-terminal state (e.g. retry after a failure).
-    if (handledRef.current && handledRef.current.orderId !== orderId) {
-      handledRef.current = null;
-    }
-    if (!isFailed && status !== "completed") {
-      if (handledRef.current?.orderId === orderId) {
-        handledRef.current = null;
-      }
+    if (status === "completed" && previousStatus !== "completed") {
+      onSuccessRef.current();
       return;
     }
 
-    if (status === "completed") {
-      if (
-        handledRef.current?.orderId !== orderId ||
-        handledRef.current?.status !== "completed"
-      ) {
-        handledRef.current = { orderId, status: "completed" };
-        onSuccessRef.current();
-      }
-    } else if (isFailed) {
-      const message = failureReason?.message || "Payment failed";
-      if (
-        handledRef.current?.orderId !== orderId ||
-        handledRef.current?.failureMessage !== message
-      ) {
-        handledRef.current = { orderId, failureMessage: message };
-        onErrorRef.current(message);
-      }
+    if (failureReason && failureMessage !== previousFailureMessage) {
+      onErrorRef.current(failureMessage);
     }
   }, [order]);
 
