@@ -9,10 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@crossmint/client-sdk-react-ui": "4.3.3",
     "@datadog/browser-rum": "^6.9.0",
     "@rainbow-me/rainbowkit": "^2.2.6",
-    "@stripe/react-stripe-js": "^3.7.0",
-    "@stripe/stripe-js": "^7.3.1",
     "@tanstack/react-query": "^5.80.6",
     "@vercel/analytics": "^1.5.0",
     "clsx": "^2.1.1",
@@ -29,6 +28,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "15.2.8",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

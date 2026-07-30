@@ -1,7 +1,13 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import type { Order } from "@/types/api";
-import { collectionId, createOrder, updateOrder, pollOrder } from "@/lib/api";
+import {
+  apiKey,
+  collectionId,
+  createOrder,
+  updateOrder,
+  pollOrder,
+} from "@/lib/api";
 import { CardPayment } from "./card-payment";
 import { CryptoPayment } from "./crypto-payment";
 import { CheckoutStatus } from "./checkout-status";
@@ -37,8 +43,9 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       const result = await createOrder({
         recipient: { email: emailAddress },
         payment: {
-          method: "stripe-payment-element",
+          method: "card",
           currency: "usd",
+          receiptEmail: emailAddress,
         },
         lineItems: [
           {
@@ -74,13 +81,14 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       // Handle card payment method update
       if (
         selectedPaymentMethod === "card" &&
-        order.payment.method !== "stripe-payment-element"
+        !["card", "basis-theory"].includes(order.payment.method)
       ) {
         const result = await updateOrder(order.orderId, clientSecret, {
           recipient: { email: emailAddress },
           payment: {
-            method: "stripe-payment-element",
+            method: "card",
             currency: "usd",
+            receiptEmail: emailAddress,
           },
         });
         if (result.success && result.order) {
@@ -260,12 +268,10 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
               {selectedPaymentMethod === "card" && (
                 <CardPayment
-                  stripePublishableKey={
-                    order?.payment.preparation?.stripePublishableKey || null
-                  }
-                  stripeClientSecret={
-                    order?.payment.preparation?.stripeClientSecret || null
-                  }
+                  apiKey={apiKey}
+                  orderId={order?.orderId || null}
+                  clientSecret={clientSecret}
+                  email={emailAddress}
                   onSuccess={handlePaymentSuccess}
                   onError={(error) => {
                     console.error("Card payment error:", error);
