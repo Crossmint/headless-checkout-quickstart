@@ -42,22 +42,40 @@ function PaymentStatusWatcher({
   }, [onError]);
 
   useEffect(() => {
-    if (!order?.orderId) return;
+    if (!order?.orderId) {
+      handledRef.current = null;
+      return;
+    }
 
-    const handled = handledRef.current;
     const orderId = order.orderId;
     const status = order.payment?.status;
+    const failureReason = order.payment?.failureReason;
+
+    // Reset the terminal-state guard when the order changes or the payment
+    // moves back to a non-terminal state (e.g. retry after a failure).
+    if (handledRef.current && handledRef.current.orderId !== orderId) {
+      handledRef.current = null;
+    }
+    if (!failureReason && status !== "completed") {
+      if (handledRef.current?.orderId === orderId) {
+        handledRef.current = null;
+      }
+      return;
+    }
 
     if (status === "completed") {
-      if (handled?.orderId !== orderId || handled?.status !== "completed") {
+      if (
+        handledRef.current?.orderId !== orderId ||
+        handledRef.current?.status !== "completed"
+      ) {
         handledRef.current = { orderId, status: "completed" };
         onSuccessRef.current();
       }
-    } else if (order.payment?.failureReason) {
-      const message = order.payment.failureReason.message || "Payment failed";
+    } else if (failureReason) {
+      const message = failureReason.message || "Payment failed";
       if (
-        handled?.orderId !== orderId ||
-        handled?.failureMessage !== message
+        handledRef.current?.orderId !== orderId ||
+        handledRef.current?.failureMessage !== message
       ) {
         handledRef.current = { orderId, failureMessage: message };
         onErrorRef.current(message);
