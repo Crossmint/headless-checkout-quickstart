@@ -38,6 +38,8 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   const [paymentMethodError, setPaymentMethodError] = useState<string | null>(
     null
   );
+  const [paymentMethodSwitchAttempt, setPaymentMethodSwitchAttempt] =
+    useState(0);
   const { address: walletAddress } = useAccount();
 
   // Create order ID when dialog opens and set credit card payment method as default
@@ -77,6 +79,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       setIsPolling(false);
       setIsUpdatingPaymentMethod(false);
       setPaymentMethodError(null);
+      setPaymentMethodSwitchAttempt(0);
     };
   }, [isOpen]);
 
@@ -144,7 +147,13 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     };
 
     updatePaymentMethod();
-  }, [selectedPaymentMethod, order, clientSecret, walletAddress]);
+  }, [
+    selectedPaymentMethod,
+    order,
+    clientSecret,
+    walletAddress,
+    paymentMethodSwitchAttempt,
+  ]);
 
   const handlePaymentSuccess = async () => {
     if (!order || !clientSecret) return;
@@ -240,7 +249,11 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
           {/* Select credit card as payment method */}
           <PaymentMethodButton
             selected={selectedPaymentMethod === "card"}
-            onClick={() => setSelectedPaymentMethod("card")}
+            onClick={() => {
+              setPaymentMethodError(null);
+              setSelectedPaymentMethod("card");
+              setPaymentMethodSwitchAttempt((n) => n + 1);
+            }}
             icon={
               <svg
                 className="w-8 h-8 text-primary"
@@ -261,7 +274,11 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
           {/* Select USDC as payment method */}
           <PaymentMethodButton
             selected={selectedPaymentMethod === "crypto"}
-            onClick={() => setSelectedPaymentMethod("crypto")}
+            onClick={() => {
+              setPaymentMethodError(null);
+              setSelectedPaymentMethod("crypto");
+              setPaymentMethodSwitchAttempt((n) => n + 1);
+            }}
             icon={
               <svg
                 className="w-8 h-8 text-primary"
