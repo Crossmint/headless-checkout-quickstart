@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   CrossmintProvider,
   CrossmintCheckoutProvider,
@@ -25,16 +25,45 @@ function PaymentStatusWatcher({
   onError: (error: string) => void;
 }) {
   const { order } = useCrossmintCheckout();
+  const onSuccessRef = useRef(onSuccess);
+  const onErrorRef = useRef(onError);
+  const handledRef = useRef<{
+    orderId?: string;
+    status?: string;
+    failureMessage?: string;
+  } | null>(null);
 
   useEffect(() => {
-    if (!order) return;
+    onSuccessRef.current = onSuccess;
+  }, [onSuccess]);
 
-    if (order.payment?.status === "completed") {
-      onSuccess();
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  useEffect(() => {
+    if (!order?.orderId) return;
+
+    const handled = handledRef.current;
+    const orderId = order.orderId;
+    const status = order.payment?.status;
+
+    if (status === "completed") {
+      if (handled?.orderId !== orderId || handled?.status !== "completed") {
+        handledRef.current = { orderId, status: "completed" };
+        onSuccessRef.current();
+      }
     } else if (order.payment?.failureReason) {
-      onError(order.payment.failureReason.message || "Payment failed");
+      const message = order.payment.failureReason.message || "Payment failed";
+      if (
+        handled?.orderId !== orderId ||
+        handled?.failureMessage !== message
+      ) {
+        handledRef.current = { orderId, failureMessage: message };
+        onErrorRef.current(message);
+      }
     }
-  }, [order, onSuccess, onError]);
+  }, [order]);
 
   return null;
 }
