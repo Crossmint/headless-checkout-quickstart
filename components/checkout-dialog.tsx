@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Order } from "@/types/api";
 import {
   apiKey,
@@ -40,6 +40,12 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   );
   const [paymentMethodSwitchAttempt, setPaymentMethodSwitchAttempt] =
     useState(0);
+  const lastUpdateRequestRef = useRef<{
+    orderId?: string;
+    method?: PaymentMethod;
+    walletAddress?: string;
+    attempt?: number;
+  } | null>(null);
   const { address: walletAddress } = useAccount();
 
   // Create order ID when dialog opens and set credit card payment method as default
@@ -80,6 +86,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       setIsUpdatingPaymentMethod(false);
       setPaymentMethodError(null);
       setPaymentMethodSwitchAttempt(0);
+      lastUpdateRequestRef.current = null;
     };
   }, [isOpen]);
 
@@ -90,11 +97,25 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     const updatePaymentMethod = async () => {
       setPaymentMethodError(null);
 
+      const last = lastUpdateRequestRef.current;
+      const alreadyRequestedForAttempt =
+        last?.orderId === order.orderId &&
+        last?.method === selectedPaymentMethod &&
+        last?.walletAddress === walletAddress &&
+        last?.attempt === paymentMethodSwitchAttempt;
+
       // Handle card payment method update
       if (
         selectedPaymentMethod === "card" &&
-        !["card", "basis-theory"].includes(order.payment.method)
+        !["card", "basis-theory"].includes(order.payment.method) &&
+        !alreadyRequestedForAttempt
       ) {
+        lastUpdateRequestRef.current = {
+          orderId: order.orderId,
+          method: selectedPaymentMethod,
+          walletAddress,
+          attempt: paymentMethodSwitchAttempt,
+        };
         setIsUpdatingPaymentMethod(true);
         setPaymentMethodError(null);
         try {
@@ -121,8 +142,15 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       if (
         selectedPaymentMethod === "crypto" &&
         order?.payment?.preparation?.payerAddress?.toLowerCase() !==
-          walletAddress?.toLowerCase()
+          walletAddress?.toLowerCase() &&
+        !alreadyRequestedForAttempt
       ) {
+        lastUpdateRequestRef.current = {
+          orderId: order.orderId,
+          method: selectedPaymentMethod,
+          walletAddress,
+          attempt: paymentMethodSwitchAttempt,
+        };
         setIsUpdatingPaymentMethod(true);
         setPaymentMethodError(null);
         try {
