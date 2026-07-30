@@ -50,13 +50,14 @@ function PaymentStatusWatcher({
     const orderId = order.orderId;
     const status = order.payment?.status;
     const failureReason = order.payment?.failureReason;
+    const isFailed = Boolean(failureReason) || (status as string) === "failed";
 
     // Reset the terminal-state guard when the order changes or the payment
     // moves back to a non-terminal state (e.g. retry after a failure).
     if (handledRef.current && handledRef.current.orderId !== orderId) {
       handledRef.current = null;
     }
-    if (!failureReason && status !== "completed") {
+    if (!isFailed && status !== "completed") {
       if (handledRef.current?.orderId === orderId) {
         handledRef.current = null;
       }
@@ -71,8 +72,8 @@ function PaymentStatusWatcher({
         handledRef.current = { orderId, status: "completed" };
         onSuccessRef.current();
       }
-    } else if (failureReason) {
-      const message = failureReason.message || "Payment failed";
+    } else if (isFailed) {
+      const message = failureReason?.message || "Payment failed";
       if (
         handledRef.current?.orderId !== orderId ||
         handledRef.current?.failureMessage !== message
