@@ -85,6 +85,8 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     if (!order || !clientSecret) return;
 
     const updatePaymentMethod = async () => {
+      setPaymentMethodError(null);
+
       // Handle card payment method update
       if (
         selectedPaymentMethod === "card" &&
