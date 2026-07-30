@@ -33,6 +33,11 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   const [order, setOrder] = useState<Order | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
+  const [isUpdatingPaymentMethod, setIsUpdatingPaymentMethod] =
+    useState(false);
+  const [paymentMethodError, setPaymentMethodError] = useState<string | null>(
+    null
+  );
   const { address: walletAddress } = useAccount();
 
   // Create order ID when dialog opens and set credit card payment method as default
@@ -70,6 +75,8 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       setOrder(null);
       setClientSecret(null);
       setIsPolling(false);
+      setIsUpdatingPaymentMethod(false);
+      setPaymentMethodError(null);
     };
   }, [isOpen]);
 
@@ -83,16 +90,24 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         selectedPaymentMethod === "card" &&
         !["card", "basis-theory"].includes(order.payment.method)
       ) {
-        const result = await updateOrder(order.orderId, clientSecret, {
-          recipient: { email: emailAddress },
-          payment: {
-            method: "card",
-            currency: "usd",
-            receiptEmail: emailAddress,
-          },
-        });
-        if (result.success && result.order) {
-          setOrder(result.order);
+        setIsUpdatingPaymentMethod(true);
+        setPaymentMethodError(null);
+        try {
+          const result = await updateOrder(order.orderId, clientSecret, {
+            recipient: { email: emailAddress },
+            payment: {
+              method: "card",
+              currency: "usd",
+              receiptEmail: emailAddress,
+            },
+          });
+          if (result.success && result.order) {
+            setOrder(result.order);
+          } else {
+            setPaymentMethodError("Could not switch to card payment.");
+          }
+        } finally {
+          setIsUpdatingPaymentMethod(false);
         }
         return;
       }
@@ -103,16 +118,24 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         order?.payment?.preparation?.payerAddress?.toLowerCase() !==
           walletAddress?.toLowerCase()
       ) {
-        const result = await updateOrder(order.orderId, clientSecret, {
-          recipient: { walletAddress },
-          payment: {
-            method: "base-sepolia",
-            currency: "usdc",
-            payerAddress: walletAddress,
-          },
-        });
-        if (result.success && result.order) {
-          setOrder(result.order);
+        setIsUpdatingPaymentMethod(true);
+        setPaymentMethodError(null);
+        try {
+          const result = await updateOrder(order.orderId, clientSecret, {
+            recipient: { walletAddress },
+            payment: {
+              method: "base-sepolia",
+              currency: "usdc",
+              payerAddress: walletAddress,
+            },
+          });
+          if (result.success && result.order) {
+            setOrder(result.order);
+          } else {
+            setPaymentMethodError("Could not switch to crypto payment.");
+          }
+        } finally {
+          setIsUpdatingPaymentMethod(false);
         }
         return;
       }
@@ -141,6 +164,12 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   const getCheckoutStatus = () => {
     if (!order) {
       return { status: "loading", message: "Creating your order..." };
+    }
+    if (isUpdatingPaymentMethod) {
+      return { status: "loading", message: "Switching payment method..." };
+    }
+    if (paymentMethodError) {
+      return { status: "error", message: paymentMethodError };
     }
     if (isPolling) {
       return { status: "loading", message: "Processing payment..." };
