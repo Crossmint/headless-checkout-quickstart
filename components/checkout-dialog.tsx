@@ -343,7 +343,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               )}
 
               {selectedPaymentMethod === "card" &&
-                ["card", "basis-theory"].includes(order?.payment.method || "") && (
+                order?.payment.method !== "base-sepolia" && (
                   <CardPayment
                     apiKey={apiKey}
                     orderId={order?.orderId || null}
