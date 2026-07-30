@@ -266,19 +266,21 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
                 </div>
               )}
 
-              {selectedPaymentMethod === "card" && (
-                <CardPayment
-                  apiKey={apiKey}
-                  orderId={order?.orderId || null}
-                  clientSecret={clientSecret}
-                  email={emailAddress}
-                  onSuccess={handlePaymentSuccess}
-                  onError={(error) => {
-                    console.error("Card payment error:", error);
-                    setIsPolling(false);
-                  }}
-                />
-              )}
+              {selectedPaymentMethod === "card" &&
+                ["card", "basis-theory"].includes(order?.payment.method || "") && (
+                  <CardPayment
+                    apiKey={apiKey}
+                    orderId={order?.orderId || null}
+                    clientSecret={clientSecret}
+                    email={emailAddress}
+                    paymentMethod={order?.payment.method || ""}
+                    onSuccess={handlePaymentSuccess}
+                    onError={(error) => {
+                      console.error("Card payment error:", error);
+                      setIsPolling(false);
+                    }}
+                  />
+                )}
 
               {selectedPaymentMethod === "crypto" && (
                 <CryptoPayment

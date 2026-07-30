@@ -13,6 +13,7 @@ interface CardPaymentProps {
   orderId: string | null;
   clientSecret: string | null;
   email: string;
+  paymentMethod: string;
   onSuccess: () => void;
   onError: (error: string) => void;
 }
@@ -92,6 +93,7 @@ export const CardPayment: React.FC<CardPaymentProps> = ({
   orderId,
   clientSecret,
   email,
+  paymentMethod,
   onSuccess,
   onError,
 }) => {
@@ -100,7 +102,7 @@ export const CardPayment: React.FC<CardPaymentProps> = ({
   }
 
   return (
-    <div key={`${orderId}-${clientSecret}`}>
+    <div key={`${orderId}-${clientSecret}-${paymentMethod}`}>
       <CrossmintProvider apiKey={apiKey}>
         <CrossmintCheckoutProvider>
           <CrossmintEmbeddedCheckout
