@@ -57,16 +57,20 @@ function PaymentStatusWatcher({
     const previousFailureReason = previousOrder?.payment?.failureReason;
     const failureMessage =
       failureReason?.message || failureReason?.code || "Payment failed";
-    const previousFailureMessage =
-      previousFailureReason?.message || previousFailureReason?.code;
 
     if (status === "completed" && previousStatus !== "completed") {
       onSuccessRef.current();
       return;
     }
 
-    if (failureReason && failureMessage !== previousFailureMessage) {
-      onErrorRef.current(failureMessage);
+    if (failureReason) {
+      const failureReasonChanged =
+        !previousFailureReason ||
+        failureReason.message !== previousFailureReason.message ||
+        failureReason.code !== previousFailureReason.code;
+      if (failureReasonChanged) {
+        onErrorRef.current(failureMessage);
+      }
     }
   }, [order]);
 
