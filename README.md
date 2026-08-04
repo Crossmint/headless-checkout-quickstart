@@ -107,9 +107,9 @@ The quickstart demonstrates the complete order lifecycle using three core API en
 #### Card Payments
 
 - **[Pay with Card Guide](https://docs.crossmint.com/payments/headless/quickstarts/credit-card-nft)**
-- Uses **Stripe Elements** with customizable UI styling
-- **No Stripe account required** we provide the Stripe keys for you
-- Crossmint returns `stripePublishableKey` and `stripeClientSecret` for seamless payment processing
+- Uses **Crossmint Embedded Checkout** with customizable UI styling
+- **No Stripe account required** Crossmint handles card processing
+- Uses the `card` payment method through Crossmint's Basis Theory flow
 - Supports credit cards, debit cards, Apple Pay, and Google Pay
 - **See implementation**: [`components/card-payment.tsx`](components/card-payment.tsx)
 

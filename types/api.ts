@@ -10,6 +10,7 @@ export type Order = {
     method: string;
     currency: string;
     payerAddress?: string;
+    receiptEmail?: string;
     preparation?: {
       stripePublishableKey?: string;
       stripeClientSecret?: string;

@@ -1,7 +1,13 @@
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Order } from "@/types/api";
-import { collectionId, createOrder, updateOrder, pollOrder } from "@/lib/api";
+import {
+  apiKey,
+  collectionId,
+  createOrder,
+  updateOrder,
+  pollOrder,
+} from "@/lib/api";
 import { CardPayment } from "./card-payment";
 import { CryptoPayment } from "./crypto-payment";
 import { CheckoutStatus } from "./checkout-status";
@@ -27,6 +33,20 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   const [order, setOrder] = useState<Order | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
+  const [isUpdatingPaymentMethod, setIsUpdatingPaymentMethod] =
+    useState(false);
+  const [paymentMethodError, setPaymentMethodError] = useState<string | null>(
+    null
+  );
+  const [paymentMethodSwitchAttempt, setPaymentMethodSwitchAttempt] =
+    useState(0);
+  const lastUpdateRequestRef = useRef<{
+    orderId?: string;
+    method?: PaymentMethod;
+    walletAddress?: string;
+    attempt?: number;
+  } | null>(null);
+  const activeRequestIdRef = useRef<string | null>(null);
   const { address: walletAddress } = useAccount();
 
   // Create order ID when dialog opens and set credit card payment method as default
@@ -37,8 +57,9 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       const result = await createOrder({
         recipient: { email: emailAddress },
         payment: {
-          method: "stripe-payment-element",
+          method: "card",
           currency: "usd",
+          receiptEmail: emailAddress,
         },
         lineItems: [
           {
@@ -63,6 +84,11 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       setOrder(null);
       setClientSecret(null);
       setIsPolling(false);
+      setIsUpdatingPaymentMethod(false);
+      setPaymentMethodError(null);
+      setPaymentMethodSwitchAttempt(0);
+      lastUpdateRequestRef.current = null;
+      activeRequestIdRef.current = null;
     };
   }, [isOpen]);
 
@@ -71,20 +97,55 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     if (!order || !clientSecret) return;
 
     const updatePaymentMethod = async () => {
+      setPaymentMethodError(null);
+
+      const last = lastUpdateRequestRef.current;
+      const alreadyRequestedForAttempt =
+        last?.orderId === order.orderId &&
+        last?.method === selectedPaymentMethod &&
+        last?.walletAddress === walletAddress &&
+        last?.attempt === paymentMethodSwitchAttempt;
+
       // Handle card payment method update
       if (
         selectedPaymentMethod === "card" &&
-        order.payment.method !== "stripe-payment-element"
+        !["card", "basis-theory"].includes(order.payment.method) &&
+        !alreadyRequestedForAttempt
       ) {
-        const result = await updateOrder(order.orderId, clientSecret, {
-          recipient: { email: emailAddress },
-          payment: {
-            method: "stripe-payment-element",
-            currency: "usd",
-          },
-        });
-        if (result.success && result.order) {
-          setOrder(result.order);
+        const requestId = `card-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2)}`;
+        lastUpdateRequestRef.current = {
+          orderId: order.orderId,
+          method: selectedPaymentMethod,
+          walletAddress,
+          attempt: paymentMethodSwitchAttempt,
+        };
+        activeRequestIdRef.current = requestId;
+        setIsUpdatingPaymentMethod(true);
+        setPaymentMethodError(null);
+        try {
+          const result = await updateOrder(order.orderId, clientSecret, {
+            recipient: { email: emailAddress },
+            payment: {
+              method: "card",
+              currency: "usd",
+              receiptEmail: emailAddress,
+            },
+          });
+          if (activeRequestIdRef.current !== requestId) {
+            return;
+          }
+          if (result.success && result.order) {
+            setOrder(result.order);
+          } else {
+            setPaymentMethodError("Could not switch to card payment.");
+          }
+        } finally {
+          if (activeRequestIdRef.current === requestId) {
+            setIsUpdatingPaymentMethod(false);
+            activeRequestIdRef.current = null;
+          }
         }
         return;
       }
@@ -93,25 +154,56 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
       if (
         selectedPaymentMethod === "crypto" &&
         order?.payment?.preparation?.payerAddress?.toLowerCase() !==
-          walletAddress?.toLowerCase()
+          walletAddress?.toLowerCase() &&
+        !alreadyRequestedForAttempt
       ) {
-        const result = await updateOrder(order.orderId, clientSecret, {
-          recipient: { walletAddress },
-          payment: {
-            method: "base-sepolia",
-            currency: "usdc",
-            payerAddress: walletAddress,
-          },
-        });
-        if (result.success && result.order) {
-          setOrder(result.order);
+        const requestId = `crypto-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2)}`;
+        lastUpdateRequestRef.current = {
+          orderId: order.orderId,
+          method: selectedPaymentMethod,
+          walletAddress,
+          attempt: paymentMethodSwitchAttempt,
+        };
+        activeRequestIdRef.current = requestId;
+        setIsUpdatingPaymentMethod(true);
+        setPaymentMethodError(null);
+        try {
+          const result = await updateOrder(order.orderId, clientSecret, {
+            recipient: { walletAddress },
+            payment: {
+              method: "base-sepolia",
+              currency: "usdc",
+              payerAddress: walletAddress,
+            },
+          });
+          if (activeRequestIdRef.current !== requestId) {
+            return;
+          }
+          if (result.success && result.order) {
+            setOrder(result.order);
+          } else {
+            setPaymentMethodError("Could not switch to crypto payment.");
+          }
+        } finally {
+          if (activeRequestIdRef.current === requestId) {
+            setIsUpdatingPaymentMethod(false);
+            activeRequestIdRef.current = null;
+          }
         }
         return;
       }
     };
 
     updatePaymentMethod();
-  }, [selectedPaymentMethod, order, clientSecret, walletAddress]);
+  }, [
+    selectedPaymentMethod,
+    order,
+    clientSecret,
+    walletAddress,
+    paymentMethodSwitchAttempt,
+  ]);
 
   const handlePaymentSuccess = async () => {
     if (!order || !clientSecret) return;
@@ -133,6 +225,12 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   const getCheckoutStatus = () => {
     if (!order) {
       return { status: "loading", message: "Creating your order..." };
+    }
+    if (isUpdatingPaymentMethod) {
+      return { status: "loading", message: "Switching payment method..." };
+    }
+    if (paymentMethodError) {
+      return { status: "error", message: paymentMethodError };
     }
     if (isPolling) {
       return { status: "loading", message: "Processing payment..." };
@@ -201,7 +299,11 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
           {/* Select credit card as payment method */}
           <PaymentMethodButton
             selected={selectedPaymentMethod === "card"}
-            onClick={() => setSelectedPaymentMethod("card")}
+            onClick={() => {
+              setPaymentMethodError(null);
+              setSelectedPaymentMethod("card");
+              setPaymentMethodSwitchAttempt((n) => n + 1);
+            }}
             icon={
               <svg
                 className="w-8 h-8 text-primary"
@@ -222,7 +324,11 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
           {/* Select USDC as payment method */}
           <PaymentMethodButton
             selected={selectedPaymentMethod === "crypto"}
-            onClick={() => setSelectedPaymentMethod("crypto")}
+            onClick={() => {
+              setPaymentMethodError(null);
+              setSelectedPaymentMethod("crypto");
+              setPaymentMethodSwitchAttempt((n) => n + 1);
+            }}
             icon={
               <svg
                 className="w-8 h-8 text-primary"
@@ -258,21 +364,21 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
                 </div>
               )}
 
-              {selectedPaymentMethod === "card" && (
-                <CardPayment
-                  stripePublishableKey={
-                    order?.payment.preparation?.stripePublishableKey || null
-                  }
-                  stripeClientSecret={
-                    order?.payment.preparation?.stripeClientSecret || null
-                  }
-                  onSuccess={handlePaymentSuccess}
-                  onError={(error) => {
-                    console.error("Card payment error:", error);
-                    setIsPolling(false);
-                  }}
-                />
-              )}
+              {selectedPaymentMethod === "card" &&
+                order?.payment.method !== "base-sepolia" && (
+                  <CardPayment
+                    apiKey={apiKey}
+                    orderId={order?.orderId || null}
+                    clientSecret={clientSecret}
+                    email={emailAddress}
+                    paymentMethod={order?.payment.method || ""}
+                    onSuccess={handlePaymentSuccess}
+                    onError={(error) => {
+                      console.error("Card payment error:", error);
+                      setIsPolling(false);
+                    }}
+                  />
+                )}
 
               {selectedPaymentMethod === "crypto" && (
                 <CryptoPayment

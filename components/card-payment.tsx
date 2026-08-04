@@ -1,33 +1,96 @@
-import { useState } from "react";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import {
-  useStripe,
-  useElements,
-  PaymentElement,
-  Elements,
-} from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
-import { Button } from "@/components/UI/button";
+  CrossmintProvider,
+  CrossmintCheckoutProvider,
+  CrossmintEmbeddedCheckout,
+  useCrossmintCheckout,
+} from "@crossmint/client-sdk-react-ui";
 import { TabHelper } from "@/components/UI/tab-helper";
-import { copyToClipboard } from "@/lib/utils";
 import { CheckIcon, CopyIcon } from "@/components/UI/icons";
+import { copyToClipboard } from "@/lib/utils";
+
+const TEST_CARD_NUMBER = "4242 4242 4242 4242";
 
 interface CardPaymentProps {
-  stripePublishableKey: string | null;
-  stripeClientSecret: string | null;
+  apiKey: string;
+  orderId: string | null;
+  clientSecret: string | null;
+  email: string;
+  paymentMethod: string;
   onSuccess: () => void;
   onError: (error: string) => void;
 }
 
-const TEST_CARD_NUMBER = "4242 4242 4242 4242";
-
-const StripeForm: React.FC<{
+function PaymentStatusWatcher({
+  onSuccess,
+  onError,
+}: {
   onSuccess: () => void;
   onError: (error: string) => void;
-}> = ({ onSuccess, onError }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [isProcessing, setIsProcessing] = useState(false);
+}) {
+  const { order } = useCrossmintCheckout();
+  const onSuccessRef = useRef(onSuccess);
+  const onErrorRef = useRef(onError);
+  const previousOrderRef = useRef(order);
+
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+  }, [onSuccess]);
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  useEffect(() => {
+    const previousOrder = previousOrderRef.current;
+    previousOrderRef.current = order;
+
+    if (!order?.orderId) {
+      return;
+    }
+
+    const status = order.payment?.status;
+    const previousStatus = previousOrder?.payment?.status;
+    const failureReason = order.payment?.failureReason;
+    const previousFailureReason = previousOrder?.payment?.failureReason;
+    const failureMessage =
+      failureReason?.message || failureReason?.code || "Payment failed";
+
+    if (status === "completed" && previousStatus !== "completed") {
+      onSuccessRef.current();
+      return;
+    }
+
+    if (failureReason) {
+      const failureReasonChanged =
+        !previousFailureReason ||
+        failureReason.message !== previousFailureReason.message ||
+        failureReason.code !== previousFailureReason.code;
+      if (failureReasonChanged) {
+        onErrorRef.current(failureMessage);
+      }
+    }
+  }, [order]);
+
+  return null;
+}
+
+export const CardPayment: React.FC<CardPaymentProps> = ({
+  apiKey,
+  orderId,
+  clientSecret,
+  email,
+  paymentMethod,
+  onSuccess,
+  onError,
+}) => {
   const [cardCopied, setCardCopied] = useState(false);
+
+  if (!orderId || !clientSecret) {
+    return null;
+  }
 
   const handleCopyCard = async () => {
     if (await copyToClipboard(TEST_CARD_NUMBER.replace(/\s/g, ""))) {
@@ -36,41 +99,8 @@ const StripeForm: React.FC<{
     }
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!stripe || !elements) return;
-
-    setIsProcessing(true);
-
-    try {
-      const { error: submitError } = await elements.submit();
-      const { error: confirmError } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: window.location.href,
-        },
-        redirect: "if_required",
-      });
-
-      if (submitError || confirmError) {
-        onError(
-          submitError?.message || confirmError?.message || "Payment failed"
-        );
-        return;
-      }
-      onSuccess();
-    } catch (err) {
-      onError(
-        err instanceof Error ? err.message : "An unexpected error occurred"
-      );
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div key={`${orderId}-${clientSecret}-${paymentMethod}`}>
       <TabHelper title="TEST CARD">
         <div className="flex items-center justify-between gap-2">
           <span>{TEST_CARD_NUMBER}</span>
@@ -89,47 +119,78 @@ const StripeForm: React.FC<{
           </button>
         </div>
       </TabHelper>
-      <PaymentElement className="w-full" />
-      <Button
-        type="submit"
-        disabled={!stripe || isProcessing}
-        className="w-full"
-      >
-        {isProcessing ? "PROCESSING..." : "PAY"}
-      </Button>
-    </form>
-  );
-};
-
-export const CardPayment: React.FC<CardPaymentProps> = ({
-  stripePublishableKey,
-  stripeClientSecret,
-  onSuccess,
-  onError,
-}) => {
-  if (!stripePublishableKey || !stripeClientSecret) {
-    return null;
-  }
-
-  const stripePromise = loadStripe(stripePublishableKey);
-
-  return (
-    <Elements
-      key={`${stripeClientSecret}-${stripePublishableKey}`}
-      stripe={stripePromise}
-      options={{
-        clientSecret: stripeClientSecret,
-        appearance: {
-          variables: {
-            colorPrimary: "#FFFFFF",
-            colorBackground: "#8989A3B2",
-            colorText: "#FFFFFF",
-            colorDanger: "#EF4444",
-          },
-        },
-      }}
-    >
-      <StripeForm onSuccess={onSuccess} onError={onError} />
-    </Elements>
+      <CrossmintProvider apiKey={apiKey}>
+        <CrossmintCheckoutProvider>
+          <CrossmintEmbeddedCheckout
+            orderId={orderId}
+            clientSecret={clientSecret}
+            payment={{
+              fiat: {
+                enabled: true,
+                defaultCurrency: "usd",
+                allowedMethods: { card: true },
+              },
+              crypto: { enabled: false },
+              defaultMethod: "fiat",
+              receiptEmail: email,
+            }}
+            appearance={{
+              rules: {
+                DestinationInput: { display: "hidden" },
+                ReceiptEmailInput: { display: "hidden" },
+                Label: {
+                  colors: { text: "#FFFFFFCC" },
+                },
+                Input: {
+                  borderRadius: "12px",
+                  colors: {
+                    text: "#FFFFFF",
+                    background: "#12122066",
+                    border: "#C7D3FF55",
+                    placeholder: "#FFFFFF99",
+                  },
+                  hover: { colors: { border: "#C7D3FF99" } },
+                  focus: { colors: { border: "#C7D3FF", background: "#12122099" } },
+                },
+                Tab: {
+                  borderRadius: "12px",
+                  colors: {
+                    text: "#FFFFFF",
+                    background: "#12121233",
+                    border: "#12121233",
+                  },
+                  hover: { colors: { border: "#C7D3FF55" } },
+                  selected: {
+                    colors: {
+                      text: "#FFFFFF",
+                      background: "#9DAFF44D",
+                      border: "#C7D3FF",
+                    },
+                  },
+                },
+                PrimaryButton: {
+                  borderRadius: "12px",
+                  colors: { text: "#000000", background: "#C7D3FF" },
+                  hover: { colors: { background: "#DCE4FF" } },
+                  disabled: { colors: { background: "#C7D3FF66" } },
+                },
+              },
+              variables: {
+                borderRadius: "12px",
+                colors: {
+                  backgroundPrimary: "transparent",
+                  textPrimary: "#FFFFFF",
+                  textSecondary: "#FFFFFFB3",
+                  accent: "#C7D3FF",
+                  danger: "#EF4444",
+                  borderPrimary: "#C7D3FF55",
+                },
+              },
+            }}
+          />
+          <PaymentStatusWatcher onSuccess={onSuccess} onError={onError} />
+        </CrossmintCheckoutProvider>
+      </CrossmintProvider>
+    </div>
   );
 };
