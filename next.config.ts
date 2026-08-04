@@ -9,6 +9,15 @@ const nextConfig: NextConfig = {
     };
     return config;
   },
+  experimental: {
+    turbo: {
+      resolveAlias: {
+        "@react-native-async-storage/async-storage":
+          "./lib/stubs/async-storage",
+        "pino-pretty": "./lib/stubs/pino-pretty",
+      },
+    },
+  },
 };
 
 export default nextConfig;
