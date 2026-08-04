@@ -11,7 +11,7 @@ interface CheckoutSuccessProps {
 }
 
 const DOCS_URL = "https://docs.crossmint.com/payments/headless/overview";
-const CONTACT_URL = "https://www.crossmint.com/contact";
+const CONTACT_URL = "https://www.crossmint.com/contact/sales";
 
 const ExternalLinkIcon = () => (
   <svg
