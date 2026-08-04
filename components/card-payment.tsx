@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CrossmintProvider,
   CrossmintCheckoutProvider,
   CrossmintEmbeddedCheckout,
   useCrossmintCheckout,
 } from "@crossmint/client-sdk-react-ui";
+import { TabHelper } from "@/components/UI/tab-helper";
+import { CheckIcon, CopyIcon } from "@/components/UI/icons";
+import { copyToClipboard } from "@/lib/utils";
+
+const TEST_CARD_NUMBER = "4242 4242 4242 4242";
 
 interface CardPaymentProps {
   apiKey: string;
@@ -77,12 +82,39 @@ export const CardPayment: React.FC<CardPaymentProps> = ({
   onSuccess,
   onError,
 }) => {
+  const [cardCopied, setCardCopied] = useState(false);
+
   if (!orderId || !clientSecret) {
     return null;
   }
 
+  const handleCopyCard = async () => {
+    if (await copyToClipboard(TEST_CARD_NUMBER.replace(/\s/g, ""))) {
+      setCardCopied(true);
+      setTimeout(() => setCardCopied(false), 2000);
+    }
+  };
+
   return (
     <div key={`${orderId}-${clientSecret}-${paymentMethod}`}>
+      <TabHelper title="TEST CARD">
+        <div className="flex items-center justify-between gap-2">
+          <span>{TEST_CARD_NUMBER}</span>
+          <button
+            type="button"
+            onClick={handleCopyCard}
+            className="p-1 cursor-pointer text-primary/80 hover:text-primary transition-colors"
+            title="Copy test card number"
+            aria-label="Copy test card number"
+          >
+            {cardCopied ? (
+              <CheckIcon className="w-[18px] h-[18px] text-green-400" />
+            ) : (
+              <CopyIcon className="w-[18px] h-[18px]" />
+            )}
+          </button>
+        </div>
+      </TabHelper>
       <CrossmintProvider apiKey={apiKey}>
         <CrossmintCheckoutProvider>
           <CrossmintEmbeddedCheckout
@@ -102,15 +134,52 @@ export const CardPayment: React.FC<CardPaymentProps> = ({
               rules: {
                 DestinationInput: { display: "hidden" },
                 ReceiptEmailInput: { display: "hidden" },
+                Label: {
+                  colors: { text: "#FFFFFFCC" },
+                },
+                Input: {
+                  borderRadius: "12px",
+                  colors: {
+                    text: "#FFFFFF",
+                    background: "#12122066",
+                    border: "#C7D3FF55",
+                    placeholder: "#FFFFFF99",
+                  },
+                  hover: { colors: { border: "#C7D3FF99" } },
+                  focus: { colors: { border: "#C7D3FF", background: "#12122099" } },
+                },
+                Tab: {
+                  borderRadius: "12px",
+                  colors: {
+                    text: "#FFFFFF",
+                    background: "#12121233",
+                    border: "#12121233",
+                  },
+                  hover: { colors: { border: "#C7D3FF55" } },
+                  selected: {
+                    colors: {
+                      text: "#FFFFFF",
+                      background: "#9DAFF44D",
+                      border: "#C7D3FF",
+                    },
+                  },
+                },
+                PrimaryButton: {
+                  borderRadius: "12px",
+                  colors: { text: "#000000", background: "#C7D3FF" },
+                  hover: { colors: { background: "#DCE4FF" } },
+                  disabled: { colors: { background: "#C7D3FF66" } },
+                },
               },
               variables: {
+                borderRadius: "12px",
                 colors: {
-                  backgroundPrimary: "#8989A3B2",
+                  backgroundPrimary: "transparent",
                   textPrimary: "#FFFFFF",
-                  textSecondary: "#FFFFFF",
-                  accent: "#FFFFFF",
+                  textSecondary: "#FFFFFFB3",
+                  accent: "#C7D3FF",
                   danger: "#EF4444",
-                  borderPrimary: "#FFFFFF",
+                  borderPrimary: "#C7D3FF55",
                 },
               },
             }}
